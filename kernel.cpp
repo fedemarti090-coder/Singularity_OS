@@ -13,9 +13,27 @@
 #include "shell.hpp"
 #include "paging.hpp"
 #include "tss.hpp"
+#include "task.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
+
+// ES di 2 task
+
+static void demo_task_a(void*) {
+    Serial::print_line("[TASK A] entered", Serial::COM1);
+    for (int i = 0; i < 3; ++i) {
+        Serial::print_line("[TASK A] running", Serial::COM1);
+        Scheduler::yield();
+    }
+}
+
+static void demo_task_b(void*) {
+    for (int i = 0; i < 3; ++i) {
+        Serial::print_line("[TASK B] running", Serial::COM1);
+        Scheduler::yield();
+    }
+}
 
 extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     VgaTerminal term;
@@ -48,6 +66,12 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
         Heap::init(16);
         Paging::init(32u * 1024u * 1024u);
+
+        Scheduler::init();
+        Scheduler::create("task_a", demo_task_a);
+        Scheduler::create("task_b", demo_task_b);
+        Scheduler::yield();
+        Serial::print_line("[SCHED] Back in kernel_main", Serial::COM1);
 
         char* buf = static_cast<char*>(Heap::alloc(32));
         const char* msg = "Singularity Heap OK";

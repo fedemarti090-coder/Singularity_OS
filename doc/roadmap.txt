@@ -12,5 +12,5 @@
 [X] Shell minimale (help, clear, info, ticks, mem...)
 [X] Paging (Page Directory / Page Table)
 [X] Ring 3 (User Mode) + TSS + syscall
-[ ] Multitasking / scheduler
+[X] Multitasking / scheduler
 [ ] File system semplice / initrd
