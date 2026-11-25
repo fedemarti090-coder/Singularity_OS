@@ -11,6 +11,7 @@
 #include "serial.hpp"
 #include "timer.hpp"
 #include "shell.hpp"
+#include "paging.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -41,6 +42,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
         Heap::init(16);
+        Paging::init(32u * 1024u * 1024u);
 
         char* buf = static_cast<char*>(Heap::alloc(32));
         const char* msg = "Singularity Heap OK";
@@ -53,8 +55,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         }
 
         Serial::print("[PMM] Free frames: ", Serial::COM1);
-    Serial::print_dec(Pmm::free_frames(), Serial::COM1);
-    Serial::print_line("", Serial::COM1);
+        Serial::print_dec(Pmm::free_frames(), Serial::COM1);
+        Serial::print_line("", Serial::COM1);
     } else {
         term.print("Multiboot magic mismatch!", "lightred");
     }

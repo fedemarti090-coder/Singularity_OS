@@ -9,8 +9,8 @@
 [X] Memory map Multiboot + PMM (pagine 4 KB)
 [X] Heap kernel (kmalloc / kfree) + funzioni base (memcpy, memset, strcmp...)
 [X] Seriale COM1 per log di debug
-[ ] Shell minimale (help, clear, info, ticks, mem...)
-[ ] Paging (Page Directory / Page Table)
+[X] Shell minimale (help, clear, info, ticks, mem...)
+[X] Paging (Page Directory / Page Table)
 [ ] Ring 3 (User Mode) + TSS + syscall
 [ ] Multitasking / scheduler
 [ ] File system semplice / initrd

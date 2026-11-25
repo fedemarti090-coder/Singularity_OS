@@ -17,7 +17,7 @@ $(BUILD_DIR)/boot.o: boot.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) boot.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp include/gdt.hpp include/idt.hpp include/pic.hpp include/keyboard.hpp include/multiboot.hpp include/pmm.hpp include/memory.hpp include/heap.hpp include/serial.hpp include/timer.hpp include/shell.hpp
+$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp include/gdt.hpp include/idt.hpp include/pic.hpp include/keyboard.hpp include/multiboot.hpp include/pmm.hpp include/memory.hpp include/heap.hpp include/serial.hpp include/timer.hpp include/shell.hpp include/paging.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
@@ -73,8 +73,12 @@ $(BUILD_DIR)/shell.o: src/shell.cpp include/shell.hpp include/vga.hpp include/ti
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c src/shell.cpp -o $@
 
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/gdt_flush.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/idt_load.o $(BUILD_DIR)/idt.o $(BUILD_DIR)/pic.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/pmm.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/heap.o $(BUILD_DIR)/serial.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/shell.o linker.ld
-	$(LD) $(LDFLAGS) $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/gdt_flush.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/idt_load.o $(BUILD_DIR)/idt.o $(BUILD_DIR)/pic.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/pmm.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/heap.o $(BUILD_DIR)/serial.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/shell.o -o $@
+$(BUILD_DIR)/paging.o: src/paging.cpp include/paging.hpp include/pmm.hpp include/memory.hpp include/serial.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c src/paging.cpp -o $@
+
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/gdt_flush.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/idt_load.o $(BUILD_DIR)/idt.o $(BUILD_DIR)/pic.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/pmm.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/heap.o $(BUILD_DIR)/serial.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/shell.o $(BUILD_DIR)/paging.o linker.ld
+	$(LD) $(LDFLAGS) $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/gdt_flush.o $(BUILD_DIR)/gdt.o $(BUILD_DIR)/idt_load.o $(BUILD_DIR)/idt.o $(BUILD_DIR)/pic.o $(BUILD_DIR)/keyboard.o $(BUILD_DIR)/pmm.o $(BUILD_DIR)/memory.o $(BUILD_DIR)/heap.o $(BUILD_DIR)/serial.o $(BUILD_DIR)/timer.o $(BUILD_DIR)/shell.o $(BUILD_DIR)/paging.o -o $@
 
 $(ISO_PATH): $(BUILD_DIR)/kernel.bin
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
