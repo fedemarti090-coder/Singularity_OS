@@ -11,7 +11,7 @@ void register_irq_handler(uint8_t irq, void (*cb)(Registers*));
 static volatile uint32_t g_ticks = 0;
 
 static void timer_irq_callback(Registers*) {
-    ++g_ticks;
+    g_ticks = g_ticks + 1;
 }
 
 void Timer::init(uint32_t frequency_hz) {

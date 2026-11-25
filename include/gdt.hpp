@@ -26,7 +26,7 @@ public:
     void init();
 
 private:
-    static constexpr size_t ENTRY_COUNT = 3;
+    static constexpr size_t ENTRY_COUNT = 6;
 
     GdtEntry entries[ENTRY_COUNT];
     GdtPtr ptr;

@@ -12,6 +12,7 @@
 #include "timer.hpp"
 #include "shell.hpp"
 #include "paging.hpp"
+#include "tss.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -25,6 +26,10 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Gdt gdt;
     gdt.init();
     term.print("GDT OK", "lightcyan");
+
+    uint32_t current_esp = 0;
+    asm volatile("mov %%esp, %0" : "=r"(current_esp));
+    Tss::init(current_esp);
 
     Pic::remap();
     Pic::disable_all();
