@@ -2,7 +2,7 @@ CXX = g++
 AS = nasm
 LD = ld
 
-CXXFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -std=c++20
+CXXFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -std=c++20 -Iinclude
 ASFLAGS = -f elf32
 LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
 
@@ -17,12 +17,16 @@ $(BUILD_DIR)/boot.o: boot.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) boot.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp
+$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o linker.ld
-	$(LD) $(LDFLAGS) $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o -o $@
+$(BUILD_DIR)/vga.o: include/vga.cpp include/vga.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c include/vga.cpp -o $@
+
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o linker.ld
+	$(LD) $(LDFLAGS) $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o -o $@
 
 $(ISO_PATH): $(BUILD_DIR)/kernel.bin
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
