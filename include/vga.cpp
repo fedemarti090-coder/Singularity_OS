@@ -1,4 +1,5 @@
 #include "vga.hpp"
+#include "io.hpp"
 
 VgaTerminal::VgaTerminal()
     : buffer(reinterpret_cast<volatile uint16_t*>(0xB8000)),
@@ -6,6 +7,7 @@ VgaTerminal::VgaTerminal()
       col(0),
       color(vga_entry_color(VgaColor::LightGrey, VgaColor::Black)) {
     clear();
+    enable_cursor();
 }
 
 void VgaTerminal::set_color(VgaColor fg, VgaColor bg) {
@@ -21,6 +23,8 @@ void VgaTerminal::clear() {
     }
     row = 0;
     col = 0;
+
+    update_cursor();
 }
 
 void VgaTerminal::scroll() {
@@ -80,6 +84,7 @@ void VgaTerminal::put_char(char c) {
     if (col >= WIDTH) {
         newline();
     }
+    update_cursor();
 }
 
 void VgaTerminal::write(const char* str) {
@@ -174,4 +179,29 @@ void VgaTerminal::print(const char* str, const char* color_str, bool n) {
     }
 
     color = prev_color;
+}
+
+void VgaTerminal::enable_cursor(uint8_t cursor_start, uint8_t cursor_end) {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, (inb(0x3D5) & 0xC0) | cursor_start);
+
+    outb(0x3D4, 0x0B);
+    outb(0x3D5, (inb(0x3D5) & 0xE0) | cursor_end);
+
+    update_cursor();
+}
+
+void VgaTerminal::disable_cursor() {
+    outb(0x3D4, 0x0A);
+    outb(0x3D5, 0x20);
+}
+
+void VgaTerminal::update_cursor() {
+    uint16_t pos = static_cast<uint16_t>(row * WIDTH + col);
+
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, static_cast<uint8_t>(pos & 0xFF));
+
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, static_cast<uint8_t>((pos >> 8) & 0xFF));
 }

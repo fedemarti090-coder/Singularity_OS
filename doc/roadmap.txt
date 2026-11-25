@@ -1,0 +1,16 @@
+[X] Boot
+[X] driver VGA
+[X] cursore
+[ ] GDT (Global Descriptor Table)
+[ ] IDT + ISR (eccezioni CPU e gestione errore / panic)
+[ ] PIC (rimappatura IRQ 32..47 + EOI)
+[ ] PIT (timer di sistema + tick + delay)
+[ ] Tastiera PS/2 (scancode -> caratteri ASCII)
+[ ] Memory map Multiboot + PMM (pagine 4 KB)
+[ ] Heap kernel (kmalloc / kfree) + funzioni base (memcpy, memset, strcmp...)
+[ ] Seriale COM1 per log di debug
+[ ] Shell minimale (help, clear, info, ticks, mem...)
+[ ] Paging (Page Directory / Page Table)
+[ ] Ring 3 (User Mode) + TSS + syscall
+[ ] Multitasking / scheduler
+[ ] File system semplice / initrd

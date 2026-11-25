@@ -34,7 +34,7 @@ class VgaTerminal {
 public:
     static constexpr size_t WIDTH = 80;
     static constexpr size_t HEIGHT = 25;
-
+    
     VgaTerminal();
 
     void clear();
@@ -47,12 +47,15 @@ public:
     void scroll();
     void newline();
     void print(const char* str, const char* color_str = "white", bool n= true);
+
+    void enable_cursor(uint8_t cursor_start = 14, uint8_t cursor_end = 15);
+    void disable_cursor();
+    void update_cursor();
+    
 private:
     volatile uint16_t* buffer;
     size_t row;
     size_t col;
     uint8_t color;
 
-    
-    
 };
