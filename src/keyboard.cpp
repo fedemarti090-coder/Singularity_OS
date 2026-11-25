@@ -2,6 +2,7 @@
 #include "pic.hpp"
 #include "io.hpp"
 #include "vga.hpp"
+#include "shell.hpp"
 
 extern "C" {
     struct Registers;
@@ -65,8 +66,7 @@ void Keyboard::on_irq() {
     }
 
     char c = scancode_to_ascii(scancode);
-    if (c != 0 && g_term != nullptr) {
-        char buf[2] = { c, '\0' };
-        g_term->print(buf, "white", false);
+    if (c != 0) {
+        Shell::on_char(c);
     }
 }

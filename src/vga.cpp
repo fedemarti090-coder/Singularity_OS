@@ -18,14 +18,11 @@ void VgaTerminal::set_color(VgaColor fg, VgaColor bg) {
 
 void VgaTerminal::clear() {
     uint16_t blank = vga_entry(' ', color);
-    for (size_t y = 0; y < HEIGHT; ++y) {
-        for (size_t x = 0; x < WIDTH; ++x) {
-            buffer[y * WIDTH + x] = blank;
-        }
+    for (size_t i = 0; i < WIDTH * HEIGHT; ++i) {
+        buffer[i] = blank;
     }
     row = 0;
     col = 0;
-
     update_cursor();
 }
 

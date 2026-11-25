@@ -8,6 +8,9 @@
 #include "pmm.hpp"
 #include "memory.hpp"
 #include "heap.hpp"
+#include "serial.hpp"
+#include "timer.hpp"
+#include "shell.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -29,6 +32,9 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     idt.init();
     term.print("PIC + IDT OK", "lightcyan");
 
+    Serial::init();
+    Serial::print_line("[BOOT] Singularity serial COM1 initialized", Serial::COM1);
+
     Keyboard::init();
     term.print("PS/2 Keyboard ready.", "yellow");
 
@@ -38,15 +44,23 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
         char* buf = static_cast<char*>(Heap::alloc(32));
         const char* msg = "Singularity Heap OK";
-        memcpy(buf, msg, strlen(msg) + 1);
-
-        if (buf != nullptr && strcmp(buf, msg) == 0) {
-            term.print(buf, "lightgreen");
+        if (buf != nullptr) {
+            memcpy(buf, msg, strlen(msg) + 1);
+            if (strcmp(buf, msg) == 0) {
+                term.print(buf, "lightgreen");
+            }
+            Heap::free(buf);
         }
-        Heap::free(buf);
+
+        Serial::print("[PMM] Free frames: ", Serial::COM1);
+    Serial::print_dec(Pmm::free_frames(), Serial::COM1);
+    Serial::print_line("", Serial::COM1);
     } else {
         term.print("Multiboot magic mismatch!", "lightred");
     }
+
+    Timer::init(100);
+    Shell::init();
 
     asm volatile("sti");
 
