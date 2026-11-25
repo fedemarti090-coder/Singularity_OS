@@ -6,6 +6,8 @@
 #include "keyboard.hpp"
 #include "multiboot.hpp"
 #include "pmm.hpp"
+#include "memory.hpp"
+#include "heap.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -32,7 +34,16 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
     if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
-        term.print("PMM initialized.", "lightcyan");
+        Heap::init(16);
+
+        char* buf = static_cast<char*>(Heap::alloc(32));
+        const char* msg = "Singularity Heap OK";
+        memcpy(buf, msg, strlen(msg) + 1);
+
+        if (buf != nullptr && strcmp(buf, msg) == 0) {
+            term.print(buf, "lightgreen");
+        }
+        Heap::free(buf);
     } else {
         term.print("Multiboot magic mismatch!", "lightred");
     }
