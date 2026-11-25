@@ -1,6 +1,7 @@
 #include "vga.hpp"
 #include "io.hpp"
 
+
 VgaTerminal::VgaTerminal()
     : buffer(reinterpret_cast<volatile uint16_t*>(0xB8000)),
       row(0),

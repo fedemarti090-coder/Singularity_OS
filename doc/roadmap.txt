@@ -1,7 +1,7 @@
 [X] Boot
 [X] driver VGA
 [X] cursore
-[ ] GDT (Global Descriptor Table)
+[X] GDT (Global Descriptor Table)
 [ ] IDT + ISR (eccezioni CPU e gestione errore / panic)
 [ ] PIC (rimappatura IRQ 32..47 + EOI)
 [ ] PIT (timer di sistema + tick + delay)

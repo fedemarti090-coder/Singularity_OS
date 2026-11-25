@@ -1,12 +1,16 @@
-#include "include/vga.hpp"
+#include "vga.hpp"
+#include "gdt.hpp"
 
 extern "C" void kernel_main() {
     VgaTerminal term;
+    term.print("1. Prima di GDT", "yellow");
 
-    term.print("", "");
-    term.print("Hello Print LIB", "yellow");
+    Gdt gdt;
+    gdt.init();
+
+    term.print("2. Dopo GDT", "lightgreen");
 
     while (true) {
-        asm volatile("hlt");
+        asm volatile("cli; hlt");
     }
 }

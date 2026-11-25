@@ -17,16 +17,24 @@ $(BUILD_DIR)/boot.o: boot.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) boot.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp
+$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp include/gdt.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
-$(BUILD_DIR)/vga.o: include/vga.cpp include/vga.hpp
+$(BUILD_DIR)/vga.o: src/vga.cpp include/vga.hpp include/io.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c include/vga.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c src/vga.cpp -o $@
 
-$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o linker.ld
-	$(LD) $(LDFLAGS) $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o -o $@
+$(BUILD_DIR)/gdt_flush.o: src/gdt_flush.asm
+	mkdir -p $(BUILD_DIR)
+	$(AS) $(ASFLAGS) src/gdt_flush.asm -o $@
+
+$(BUILD_DIR)/gdt.o: src/gdt.cpp include/gdt.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c src/gdt.cpp -o $@
+
+$(BUILD_DIR)/kernel.bin: $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/gdt_flush.o $(BUILD_DIR)/gdt.o linker.ld
+	$(LD) $(LDFLAGS) $(BUILD_DIR)/boot.o $(BUILD_DIR)/kernel.o $(BUILD_DIR)/vga.o $(BUILD_DIR)/gdt_flush.o $(BUILD_DIR)/gdt.o -o $@
 
 $(ISO_PATH): $(BUILD_DIR)/kernel.bin
 	mkdir -p $(BUILD_DIR)/isodir/boot/grub
@@ -37,7 +45,7 @@ $(ISO_PATH): $(BUILD_DIR)/kernel.bin
 run: $(ISO_PATH)
 	mkdir -p /mnt/c/temp
 	cp $(ISO_PATH) /mnt/c/temp/singularity.iso
-	$(QEMU) -drive file=$(WIN_ISO_PATH),format=raw,media=cdrom
+	$(QEMU) -cdrom $(WIN_ISO_PATH)
 
 clean:
 	rm -rf $(BUILD_DIR) /mnt/c/temp/singularity.iso
