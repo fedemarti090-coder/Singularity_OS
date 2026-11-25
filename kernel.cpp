@@ -1,6 +1,7 @@
 #include "vga.hpp"
 #include "gdt.hpp"
 #include "idt.hpp"
+#include "pic.hpp"
 
 extern "C" void kernel_main() {
     VgaTerminal term;
@@ -10,11 +11,14 @@ extern "C" void kernel_main() {
     gdt.init();
     term.print("GDT OK", "lightcyan");
 
+    Pic::remap();
     Idt idt;
     idt.init();
-    term.print("IDT OK", "lightcyan");
+    term.print("PIC + IDT OK", "lightcyan");
+
+    asm volatile("sti");
 
     while (true) {
-        asm volatile("cli; hlt");
+        asm volatile("hlt");
     }
 }
