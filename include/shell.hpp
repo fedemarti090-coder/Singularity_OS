@@ -20,6 +20,9 @@ private:
     static void cmd_info();
     static void cmd_ticks();
     static void cmd_mem();
+
+    static void ls();
+    static void cat_file();
     
     // ... future funzioni shell
 };

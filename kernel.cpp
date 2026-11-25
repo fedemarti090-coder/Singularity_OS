@@ -1,4 +1,5 @@
 #include <stdint.h>
+#include "initrd.hpp"
 #include "vga.hpp"
 #include "gdt.hpp"
 #include "idt.hpp"
@@ -62,10 +63,25 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Keyboard::init();
     term.print("PS/2 Keyboard ready.", "yellow");
 
+    
+
     if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
         Heap::init(16);
         Paging::init(32u * 1024u * 1024u);
+
+        if (InitRd::init(mb_info)) {
+            for (size_t i = 0; i < InitRd::count(); ++i) {
+                const InitRdEntry* e = InitRd::get_at(i);
+                if (e != nullptr && !e->is_dir) {
+                    Serial::print("[INITRD] file: ", Serial::COM1);
+                    Serial::print(e->name, Serial::COM1);
+                    Serial::print(" (", Serial::COM1);
+                    Serial::print_dec(static_cast<int32_t>(e->size), Serial::COM1);
+                    Serial::print_line(" bytes)", Serial::COM1);
+                }
+            }
+        }
 
         Scheduler::init();
         Scheduler::create("task_a", demo_task_a);
