@@ -1,14 +1,18 @@
 #include "vga.hpp"
 #include "gdt.hpp"
+#include "idt.hpp"
 
 extern "C" void kernel_main() {
     VgaTerminal term;
-    term.print("1. Prima di GDT", "yellow");
+    term.print("Singularity OS booting...", "lightgreen");
 
     Gdt gdt;
     gdt.init();
+    term.print("GDT OK", "lightcyan");
 
-    term.print("2. Dopo GDT", "lightgreen");
+    Idt idt;
+    idt.init();
+    term.print("IDT OK", "lightcyan");
 
     while (true) {
         asm volatile("cli; hlt");

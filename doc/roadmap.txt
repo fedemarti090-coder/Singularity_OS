@@ -2,7 +2,7 @@
 [X] driver VGA
 [X] cursore
 [X] GDT (Global Descriptor Table)
-[ ] IDT + ISR (eccezioni CPU e gestione errore / panic)
+[X] IDT + ISR (eccezioni CPU e gestione errore / panic)
 [ ] PIC (rimappatura IRQ 32..47 + EOI)
 [ ] PIT (timer di sistema + tick + delay)
 [ ] Tastiera PS/2 (scancode -> caratteri ASCII)
