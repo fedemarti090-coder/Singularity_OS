@@ -104,3 +104,5 @@ irq_common:
     popad
     add esp, 8
     iretd
+
+section .note.GNU-stack noalloc noexec nowrite progbits

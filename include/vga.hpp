@@ -59,3 +59,5 @@ private:
     uint8_t color;
 
 };
+
+extern VgaTerminal* g_term;
