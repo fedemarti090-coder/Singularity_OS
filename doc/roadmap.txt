@@ -23,13 +23,14 @@ Framebuffer Lineare
 [X] Implementare driver Framebuffer (put_pixel, fill_rect, swap_buffers)
 
 Immagine di Sfondo da InitRd
-[X] Aggiungere un'immagine wallpaper.bmp (24/32-bit non compressa) in initrd_root
+[X] Aggiungere un'immagine wallpaper.bmp (24/32-bit non compressa) in initrd_root ( ≃ 3h per una task :C )
 [X] Implementare parser BMP minimale leggendo il file tramite InitRd
-[ ] Decodificare lo sfondo in un buffer dedicato all'avvio e copiarlo sul backbuffer ad ogni frame
+[X] Decodificare lo sfondo in un buffer dedicato all'avvio e copiarlo sul backbuffer ad ogni frame
+[X] Rettangolo per barra delle applicazioni
 
 Font Bitmap & Testo Grafico
-[ ] Integrare tabella font bitmap 8x16 (font.hpp)
-[ ] Implementare draw_char e draw_string sul Framebuffer
+[X] Integrare tabella font bitmap 8x16 (font.hpp)
+[X] Implementare draw_char e draw_string sul Framebuffer
 
 Driver Mouse PS/2 & Cursore
 [ ] Inizializzare porta ausiliaria PS/2 e abilitare IRQ 12 su PIC e IDT
@@ -37,7 +38,7 @@ Driver Mouse PS/2 & Cursore
 [ ] Disegnare il cursore sopra tutti i layer prima dello swap_buffers
 
 Barra delle Applicazioni (Taskbar)
-[ ] Disegnare la barra in basso a tutta larghezza
+[X] Disegnare la barra in basso a tutta larghezza
 [ ] Aggiungere pulsante Start con popup menu delle app
 [ ] Aggiungere elenco pulsanti per le finestre aperte
 [ ] Aggiungere orologio / uptime a destra collegato a Timer::ticks()

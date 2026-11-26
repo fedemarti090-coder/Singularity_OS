@@ -180,3 +180,4 @@ void Framebuffer::swap_buffers() {
         dst[i] = src[i];
     }
 }
+

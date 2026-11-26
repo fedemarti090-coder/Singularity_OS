@@ -17,6 +17,7 @@
 #include "task.hpp"
 #include "framebuffer.hpp"
 #include "bmp.hpp"
+#include "font.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -122,6 +123,9 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
             if (Wallpaper::is_loaded()) {
                 Wallpaper::draw_to_backbuffer();
             }
+
+            Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
+
             Framebuffer::swap_buffers();
         }
 
