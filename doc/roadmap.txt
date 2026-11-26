@@ -47,5 +47,5 @@ Barra delle Applicazioni (Taskbar)
 Mini Window Manager & App Base
 [X] Definire struttura Window (posizione, dimensioni, titolo, visibilita, focus)
 [X] Gestire drag dalla titlebar, focus al click e pulsante di chiusura
-[ ] Collegare finestra Terminale (Shell grafica)
-[ ] Collegare finestra File Viewer per esplorare e aprire file da InitRd
+[X] Collegare finestra Terminale (Shell grafica)
+[X] Collegare finestra File Viewer per esplorare e aprire file da InitRd

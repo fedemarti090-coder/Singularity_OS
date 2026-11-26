@@ -4,9 +4,11 @@
 
 enum class WindowKind : uint8_t {
     None = 0,
-    Shell,
-    Files,
-    About
+    Shell = 1,
+    Files = 2,
+    About = 3,
+    TextViewer = 4,
+    ImageViewer = 5
 };
 
 // main struct di una finestra software
@@ -23,6 +25,13 @@ struct Window {
     bool dragging;
     int32_t drag_offset_x;
     int32_t drag_offset_y;
+    int32_t selected_file;
+    bool maximized;
+    int32_t restore_x;
+    int32_t restore_y;
+    int32_t restore_w;
+    int32_t restore_h;
+    char opened_file[64];
 };
 
 namespace WindowManager {

@@ -53,14 +53,11 @@ static void render_frame(bool fb_ok) {
     if (Wallpaper::is_loaded()) {
         Wallpaper::draw_to_backbuffer();
     }
-
+    Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
     
     WindowManager::draw_all();
     //Framebuffer::fill_rect(120, 90, 420, 260, Framebuffer::rgb(255, 0, 128));
 
-    Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
-
-    
     Taskbar::draw();
 
     Cursor::draw(m.x, m.y);
@@ -128,8 +125,9 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
         WindowManager::init();
         if (fb_ok) {
-            WindowManager::create(WindowKind::Shell, "Singularity Shell", 120, 90, 420, 260);
             WindowManager::create(WindowKind::Files, "Singularity File", 150, 110, 420, 260);
+            WindowManager::create(WindowKind::Shell, "Singularity Shell", 120, 90, 420, 260);
+            
         }
 
         if (initrd_ok) {
