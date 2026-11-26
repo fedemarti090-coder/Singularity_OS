@@ -21,6 +21,7 @@
 #include "mouse.hpp"
 #include "cursor.hpp"
 #include "icons.hpp"
+#include "taskbar.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -58,26 +59,29 @@ static void draw_taskbar() {
     Framebuffer::fill_rect(0, bar_y, fb_w, bar_h, bar_bg);
     Framebuffer::fill_rect(0, bar_y, fb_w, 1, bar_border);
 
-    // 1. Start (x = 6, w = 88)
+    // Start
     const int32_t start_x = 6;
     const int32_t start_w = 88;
     Framebuffer::fill_rect(start_x, btn_y, start_w, btn_h, btn_bg);
     Icons::draw(IconId::Start, start_x + 6, ico_y);
     Font8x16::draw_text(start_x + 28, txt_y, "Start", text_col);
 
-    // 2. Shell (x = 100, w = 96)
+    // Shell
     const int32_t shell_x = start_x + start_w + 6;
     const int32_t shell_w = 96;
     Framebuffer::fill_rect(shell_x, btn_y, shell_w, btn_h, btn_bg);
     Icons::draw(IconId::Terminal, shell_x + 6, ico_y);
     Font8x16::draw_text(shell_x + 28, txt_y, "Shell", text_col);
 
-    // 3. File (x = 202, w = 88)
+    // File
     const int32_t file_x = shell_x + shell_w + 6;
     const int32_t file_w = 88;
     Framebuffer::fill_rect(file_x, btn_y, file_w, btn_h, btn_bg);
     Icons::draw(IconId::Files, file_x + 6, ico_y);
     Font8x16::draw_text(file_x + 28, txt_y, "File", text_col);
+
+    // Orologio / Uptime a destra
+    Taskbar::draw_uptime_clock(bar_y, fb_w);
 }
 
 static void render_frame(bool fb_ok) {
@@ -198,8 +202,14 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
     asm volatile("sti");
 
+    uint32_t last_sec = 0;
     while (true) {
-        if (fb_ok && Mouse::state().dirty) {
+        uint32_t now_sec = Timer::ticks() / 100u;
+        bool mouse_changed = Mouse::state().dirty;
+        bool time_changed = (now_sec != last_sec);
+
+        if (fb_ok && (mouse_changed || time_changed)) {
+            last_sec = now_sec;
             render_frame(fb_ok);
         }
         asm volatile("hlt");
