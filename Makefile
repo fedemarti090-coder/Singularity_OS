@@ -2,12 +2,15 @@ CXX = g++
 AS = nasm
 LD = ld
 
-CXXFLAGS = -m32 -ffreestanding -O2 -Wall -Wextra -fno-exceptions -fno-rtti -std=c++20 -Iinclude
+CXXFLAGS = -m32 -ffreestanding -fno-threadsafe-statics -O2 -Wall -Wextra -fno-exceptions -fno-rtti -std=c++20 -Iinclude -Iinclude/core -Iinclude/graphics
 ASFLAGS = -f elf32
 LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
 
 QEMU = "/mnt/c/Program Files/qemu/qemu-system-x86_64.exe"
 BUILD_DIR = build
+SRC_CORE = src/core
+INC_CORE = include/core
+INC_GFX = include/graphics
 INITRD_DIR = initrd_root
 INITRD_TAR = $(BUILD_DIR)/initrd.tar
 ISO_PATH = $(BUILD_DIR)/os.iso
@@ -44,93 +47,93 @@ $(BUILD_DIR)/boot.o: boot.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) boot.asm -o $@
 
-$(BUILD_DIR)/switch.o: src/switch.asm
+$(BUILD_DIR)/switch.o: $(SRC_CORE)/switch.asm
 	mkdir -p $(BUILD_DIR)
-	$(AS) $(ASFLAGS) src/switch.asm -o $@
+	$(AS) $(ASFLAGS) $(SRC_CORE)/switch.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp include/gdt.hpp include/idt.hpp include/pic.hpp include/keyboard.hpp include/mouse.hpp include/multiboot.hpp include/pmm.hpp include/memory.hpp include/heap.hpp include/serial.hpp include/timer.hpp include/shell.hpp include/paging.hpp include/tss.hpp include/task.hpp include/initrd.hpp include/framebuffer.hpp include/bmp.hpp
+$(BUILD_DIR)/kernel.o: kernel.cpp $(INC_CORE)/vga.hpp $(INC_CORE)/gdt.hpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/keyboard.hpp $(INC_CORE)/mouse.hpp $(INC_CORE)/cursor.hpp $(INC_GFX)/icons.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/serial.hpp $(INC_CORE)/timer.hpp $(INC_CORE)/shell.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/tss.hpp $(INC_CORE)/task.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/bmp.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
-$(BUILD_DIR)/vga.o: src/vga.cpp include/vga.hpp include/io.hpp
+$(BUILD_DIR)/vga.o: $(SRC_CORE)/vga.cpp $(INC_CORE)/vga.hpp $(INC_CORE)/io.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/vga.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/vga.cpp -o $@
 
-$(BUILD_DIR)/gdt_flush.o: src/gdt_flush.asm
+$(BUILD_DIR)/gdt_flush.o: $(SRC_CORE)/gdt_flush.asm
 	mkdir -p $(BUILD_DIR)
-	$(AS) $(ASFLAGS) src/gdt_flush.asm -o $@
+	$(AS) $(ASFLAGS) $(SRC_CORE)/gdt_flush.asm -o $@
 
-$(BUILD_DIR)/gdt.o: src/gdt.cpp include/gdt.hpp include/tss.hpp
+$(BUILD_DIR)/gdt.o: $(SRC_CORE)/gdt.cpp $(INC_CORE)/gdt.hpp $(INC_CORE)/tss.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/gdt.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/gdt.cpp -o $@
 
-$(BUILD_DIR)/idt_load.o: src/idt_load.asm
+$(BUILD_DIR)/idt_load.o: $(SRC_CORE)/idt_load.asm
 	mkdir -p $(BUILD_DIR)
-	$(AS) $(ASFLAGS) src/idt_load.asm -o $@
+	$(AS) $(ASFLAGS) $(SRC_CORE)/idt_load.asm -o $@
 
-$(BUILD_DIR)/idt.o: src/idt.cpp include/idt.hpp include/pic.hpp include/vga.hpp include/serial.hpp
+$(BUILD_DIR)/idt.o: $(SRC_CORE)/idt.cpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/vga.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/idt.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/idt.cpp -o $@
 
-$(BUILD_DIR)/pic.o: src/pic.cpp include/pic.hpp include/io.hpp
+$(BUILD_DIR)/pic.o: $(SRC_CORE)/pic.cpp $(INC_CORE)/pic.hpp $(INC_CORE)/io.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/pic.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/pic.cpp -o $@
 
-$(BUILD_DIR)/keyboard.o: src/keyboard.cpp include/keyboard.hpp include/pic.hpp include/io.hpp include/vga.hpp include/shell.hpp
+$(BUILD_DIR)/keyboard.o: $(SRC_CORE)/keyboard.cpp $(INC_CORE)/keyboard.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/io.hpp $(INC_CORE)/vga.hpp $(INC_CORE)/shell.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/keyboard.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/keyboard.cpp -o $@
 
-$(BUILD_DIR)/mouse.o: src/mouse.cpp include/mouse.hpp include/idt.hpp include/pic.hpp include/io.hpp include/serial.hpp
+$(BUILD_DIR)/mouse.o: $(SRC_CORE)/mouse.cpp $(INC_CORE)/mouse.hpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/io.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/mouse.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/mouse.cpp -o $@
 
-$(BUILD_DIR)/pmm.o: src/pmm.cpp include/pmm.hpp include/multiboot.hpp
+$(BUILD_DIR)/pmm.o: $(SRC_CORE)/pmm.cpp $(INC_CORE)/pmm.hpp $(INC_CORE)/multiboot.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/pmm.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/pmm.cpp -o $@
 
-$(BUILD_DIR)/memory.o: src/memory.cpp include/memory.hpp
+$(BUILD_DIR)/memory.o: $(SRC_CORE)/memory.cpp $(INC_CORE)/memory.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/memory.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/memory.cpp -o $@
 
-$(BUILD_DIR)/heap.o: src/heap.cpp include/heap.hpp include/pmm.hpp include/memory.hpp include/paging.hpp
+$(BUILD_DIR)/heap.o: $(SRC_CORE)/heap.cpp $(INC_CORE)/heap.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/paging.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/heap.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/heap.cpp -o $@
 
-$(BUILD_DIR)/serial.o: src/serial.cpp include/serial.hpp include/io.hpp
+$(BUILD_DIR)/serial.o: $(SRC_CORE)/serial.cpp $(INC_CORE)/serial.hpp $(INC_CORE)/io.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/serial.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/serial.cpp -o $@
 
-$(BUILD_DIR)/timer.o: src/timer.cpp include/timer.hpp include/pic.hpp include/io.hpp include/task.hpp
+$(BUILD_DIR)/timer.o: $(SRC_CORE)/timer.cpp $(INC_CORE)/timer.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/io.hpp $(INC_CORE)/task.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/timer.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/timer.cpp -o $@
 
-$(BUILD_DIR)/shell.o: src/shell.cpp include/shell.hpp include/vga.hpp include/timer.hpp include/pmm.hpp include/heap.hpp include/memory.hpp include/serial.hpp include/task.hpp
+$(BUILD_DIR)/shell.o: $(SRC_CORE)/shell.cpp $(INC_CORE)/shell.hpp $(INC_CORE)/vga.hpp $(INC_CORE)/timer.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp $(INC_CORE)/task.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/shell.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/shell.cpp -o $@
 
-$(BUILD_DIR)/paging.o: src/paging.cpp include/paging.hpp include/pmm.hpp include/memory.hpp include/serial.hpp
+$(BUILD_DIR)/paging.o: $(SRC_CORE)/paging.cpp $(INC_CORE)/paging.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/paging.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/paging.cpp -o $@
 
-$(BUILD_DIR)/tss.o: src/tss.cpp include/tss.hpp include/memory.hpp include/serial.hpp
+$(BUILD_DIR)/tss.o: $(SRC_CORE)/tss.cpp $(INC_CORE)/tss.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/tss.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/tss.cpp -o $@
 
-$(BUILD_DIR)/task.o: src/task.cpp include/task.hpp include/heap.hpp include/memory.hpp include/serial.hpp
+$(BUILD_DIR)/task.o: $(SRC_CORE)/task.cpp $(INC_CORE)/task.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/task.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/task.cpp -o $@
 
-$(BUILD_DIR)/initrd.o: src/initrd.cpp include/initrd.hpp include/multiboot.hpp include/memory.hpp include/serial.hpp
+$(BUILD_DIR)/initrd.o: $(SRC_CORE)/initrd.cpp $(INC_CORE)/initrd.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/initrd.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/initrd.cpp -o $@
 
-$(BUILD_DIR)/framebuffer.o: src/framebuffer.cpp include/framebuffer.hpp include/multiboot.hpp include/paging.hpp include/pmm.hpp include/memory.hpp include/serial.hpp
+$(BUILD_DIR)/framebuffer.o: $(SRC_CORE)/framebuffer.cpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/framebuffer.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/framebuffer.cpp -o $@
 
-$(BUILD_DIR)/bmp.o: src/bmp.cpp include/bmp.hpp include/initrd.hpp include/framebuffer.hpp include/paging.hpp include/pmm.hpp include/memory.hpp include/serial.hpp
+$(BUILD_DIR)/bmp.o: $(SRC_CORE)/bmp.cpp $(INC_CORE)/bmp.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
-	$(CXX) $(CXXFLAGS) -c src/bmp.cpp -o $@
+	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/bmp.cpp -o $@
 
 $(INITRD_TAR): $(wildcard $(INITRD_DIR)/*)
 	mkdir -p $(BUILD_DIR) $(INITRD_DIR)

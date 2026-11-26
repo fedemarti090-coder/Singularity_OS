@@ -35,12 +35,12 @@ Font Bitmap & Testo Grafico
 Driver Mouse PS/2 & Cursore
 [X] Inizializzare porta ausiliaria PS/2 e abilitare IRQ 12 su PIC e IDT
 [X] Decodificare pacchetti mouse a 3 byte aggiornando coordinate (mouse_x, mouse_y) e click
-[ ] Disegnare il cursore sopra tutti i layer prima dello swap_buffers
+[X] Disegnare il cursore sopra tutti i layer prima dello swap_buffers
 
 Barra delle Applicazioni (Taskbar)
 [X] Disegnare la barra in basso a tutta larghezza
-[ ] Aggiungere pulsante Start con popup menu delle app
-[ ] Aggiungere elenco pulsanti per le finestre aperte
+[X] Aggiungere pulsante Start con popup menu delle app
+[X] Aggiungere elenco pulsanti per le finestre aperte
 [ ] Aggiungere orologio / uptime a destra collegato a Timer::ticks()
 
 Mini Window Manager & App Base
