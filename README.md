@@ -2,7 +2,7 @@
 
 Un sistema operativo *freestanding* **x86 (32-bit)** scritto in **C++20** moderno e assembly, avviato tramite **Multiboot** ed eseguito su **QEMU** con terminale VGA, log su porta seriale (`COM1`), gestione della memoria, scheduling dei task, shell interattiva e filesystem `initrd` in formato USTAR.
 
-<div align="center"><img src="doc/img/img-4.png" alt="Singularity OS"></div>
+<div align="center"><img src="doc/img/img-7.png" alt="Singularity OS"></div>
 
 ## Funzionalità
 
