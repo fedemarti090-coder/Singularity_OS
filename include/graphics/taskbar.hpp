@@ -4,8 +4,23 @@
 #include "font.hpp"
 #include "icons.hpp"
 #include "rtc.hpp"
+#include "_window.hpp"
 
 namespace Taskbar {
+
+inline constexpr int32_t BAR_H   = 36;
+inline constexpr int32_t START_X = 6;
+inline constexpr int32_t START_W = 88;
+inline constexpr int32_t SHELL_X = START_X + START_W + 6;
+inline constexpr int32_t SHELL_W = 96;
+inline constexpr int32_t FILE_X  = SHELL_X + SHELL_W + 6;
+inline constexpr int32_t FILE_W  = 88;
+
+inline bool prev_left_down = false;
+
+inline bool point_in_rect(int32_t px, int32_t py, int32_t rx, int32_t ry, int32_t rw, int32_t rh) {
+    return px >= rx && px < (rx + rw) && py >= ry && py < (ry + rh);
+}
 
 inline void draw_u32_2digits(int32_t x, int32_t y, uint32_t value, uint32_t color) {
     char buf[3];
@@ -45,8 +60,7 @@ inline void draw_clock(int32_t bar_y, int32_t fb_w, int8_t tz_offset_hours = 1) 
 }
 
 inline void draw() {
-    const int32_t bar_h = 36;
-    const int32_t bar_y = static_cast<int32_t>(Framebuffer::height()) - bar_h;
+    const int32_t bar_y = static_cast<int32_t>(Framebuffer::height()) - BAR_H;
     const int32_t fb_w  = static_cast<int32_t>(Framebuffer::width());
 
     const int32_t btn_y = bar_y + 4;
@@ -59,32 +73,51 @@ inline void draw() {
     const uint32_t btn_bg     = Framebuffer::rgb(32, 32, 32);
     const uint32_t text_col   = Framebuffer::rgb(245, 247, 250);
 
-    Framebuffer::fill_rect(0, bar_y, fb_w, bar_h, bar_bg);
+    Framebuffer::fill_rect(0, bar_y, fb_w, BAR_H, bar_bg);
     Framebuffer::fill_rect(0, bar_y, fb_w, 1, bar_border);
 
     // 1. Start
-    const int32_t start_x = 6;
-    const int32_t start_w = 88;
-    Framebuffer::fill_rect(start_x, btn_y, start_w, btn_h, btn_bg);
-    Icons::draw(IconId::Start, start_x + 6, ico_y);
-    Font8x16::draw_text(start_x + 28, txt_y, "Start", text_col);
+    Framebuffer::fill_rect(START_X, btn_y, START_W, btn_h, btn_bg);
+    Icons::draw(IconId::Start, START_X + 6, ico_y);
+    Font8x16::draw_text(START_X + 28, txt_y, "Start", text_col);
 
     // 2. Shell
-    const int32_t shell_x = start_x + start_w + 6;
-    const int32_t shell_w = 96;
-    Framebuffer::fill_rect(shell_x, btn_y, shell_w, btn_h, btn_bg);
-    Icons::draw(IconId::Terminal, shell_x + 6, ico_y);
-    Font8x16::draw_text(shell_x + 28, txt_y, "Shell", text_col);
+    Framebuffer::fill_rect(SHELL_X, btn_y, SHELL_W, btn_h, btn_bg);
+    Icons::draw(IconId::Terminal, SHELL_X + 6, ico_y);
+    Font8x16::draw_text(SHELL_X + 28, txt_y, "Shell", text_col);
 
     // 3. File
-    const int32_t file_x = shell_x + shell_w + 6;
-    const int32_t file_w = 88;
-    Framebuffer::fill_rect(file_x, btn_y, file_w, btn_h, btn_bg);
-    Icons::draw(IconId::Files, file_x + 6, ico_y);
-    Font8x16::draw_text(file_x + 28, txt_y, "File", text_col);
+    Framebuffer::fill_rect(FILE_X, btn_y, FILE_W, btn_h, btn_bg);
+    Icons::draw(IconId::Files, FILE_X + 6, ico_y);
+    Font8x16::draw_text(FILE_X + 28, txt_y, "File", text_col);
 
     // 4. Orologio RTC a destra
     draw_clock(bar_y, fb_w, 1);
+}
+
+inline bool on_mouse(int32_t mx, int32_t my, bool left_down) {
+    bool pressed_edge = left_down && !prev_left_down;
+    prev_left_down = left_down;
+
+    if (!pressed_edge) {
+        return false;
+    }
+
+    const int32_t bar_y = static_cast<int32_t>(Framebuffer::height()) - BAR_H;
+    const int32_t btn_y = bar_y + 4;
+    const int32_t btn_h = 28;
+
+    if (point_in_rect(mx, my, SHELL_X, btn_y, SHELL_W, btn_h)) {
+        WindowManager::open_or_focus(WindowKind::Shell, "Singularity Shell", 120, 90, 420, 260);
+        return true;
+    }
+
+    if (point_in_rect(mx, my, FILE_X, btn_y, FILE_W, btn_h)) {
+        WindowManager::open_or_focus(WindowKind::Files, "Singularity File", 180, 130, 420, 260);
+        return true;
+    }
+
+    return false;
 }
 
 }

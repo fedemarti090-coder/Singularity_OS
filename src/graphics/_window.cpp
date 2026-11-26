@@ -1,6 +1,7 @@
 #include "_window.hpp"
 #include "framebuffer.hpp"
 #include "font.hpp"
+#include "shell.hpp"
 
 namespace WindowManager {
 
@@ -83,12 +84,26 @@ void stop_all_drags() {
 void draw_client_content(const Window& win, int32_t cx, int32_t cy, int32_t cw, int32_t ch) {
     (void)cw;
     (void)ch;
-    const uint32_t dim_col = Framebuffer::rgb(175, 182, 194);
-    const uint32_t acc_col = Framebuffer::rgb(138, 237, 128);
+    const uint32_t dim_col  = Framebuffer::rgb(175, 182, 194);
+    const uint32_t acc_col  = Framebuffer::rgb(138, 237, 128);
+    const uint32_t text_col = Framebuffer::rgb(245, 247, 250);
 
     if (win.kind == WindowKind::Shell) {
-        Font8x16::draw_text(cx + 10, cy + 12, "Singularity Shell ready", acc_col);
-        Font8x16::draw_text(cx + 10, cy + 32, "> help", dim_col);
+        const uint32_t cmd_col = Framebuffer::rgb(138, 237, 128);
+        const uint32_t rsp_col = Framebuffer::rgb(210, 216, 226);
+
+        int32_t y = cy + 8;
+        int32_t max_y = cy + ch - 20;
+        size_t n = Shell::history_count();
+        for (size_t i = 0; i < n && y + 16 < max_y; ++i) {
+            uint32_t col = (Shell::history_kind_at(i) == ShellLineKind::Command) ? cmd_col : rsp_col;
+            Font8x16::draw_text(cx + 8, y, Shell::history_at(i), col);
+            y += 16;
+        }
+        if (y + 16 <= cy + ch - 4) {
+            Font8x16::draw_text(cx + 8, y, "singularity> ", acc_col);
+            Font8x16::draw_text(cx + 8 + 13 * 8, y, Shell::current_input(), text_col);
+        }
     } else if (win.kind == WindowKind::Files) {
         Font8x16::draw_text(cx + 10, cy + 12, "initrd:/", acc_col);
         Font8x16::draw_text(cx + 10, cy + 32, "wallpaper.bmp", dim_col);
@@ -280,6 +295,18 @@ void draw_all() {
     for (size_t i = 0; i < n; ++i) {
         draw_one(windows[i]);
     }
+}
+
+Window* open_or_focus(WindowKind kind, const char* title, int32_t x, int32_t y, int32_t w, int32_t h) {
+    size_t n = (count < MAX_WINDOWS) ? count : MAX_WINDOWS;
+    for (size_t i = 0; i < n; ++i) {
+        if (windows[i].kind == kind) {
+            windows[i].visible = true;
+            bring_to_front(i);
+            return &windows[n - 1];
+        }
+    }
+    return create(kind, title, x, y, w, h);
 }
 
 }

@@ -36,6 +36,7 @@ extern size_t count;
 void init();
 void clear_focus();
 Window* create(WindowKind kind, const char* title, int32_t x, int32_t y, int32_t w, int32_t h);
+Window* open_or_focus(WindowKind kind, const char* title, int32_t x, int32_t y, int32_t w, int32_t h);
 bool on_mouse(int32_t mx, int32_t my, bool left_down);
 void draw_one(const Window& win);
 void draw_all();

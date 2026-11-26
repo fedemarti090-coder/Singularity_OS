@@ -182,13 +182,16 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     while (true) {
         const auto& m = Mouse::state();
         bool left_down = m.left_button;
-        bool win_changed = WindowManager::on_mouse(m.x, m.y, left_down);
+
+        bool tb_changed = Taskbar::on_mouse(m.x, m.y, left_down);
+        bool win_changed = tb_changed ? false : WindowManager::on_mouse(m.x, m.y, left_down);
+        bool shell_changed = Shell::consume_dirty();
 
         uint8_t now_sec = Rtc::read_time(1).seconds;
-        bool mouse_changed = m.dirty || win_changed;
+        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed;
         bool time_changed = (now_sec != last_rtc_sec);
 
-        if (fb_ok && (mouse_changed || time_changed)) {
+        if (fb_ok && (ui_changed || time_changed)) {
             last_rtc_sec = now_sec;
             render_frame(fb_ok);
         }
