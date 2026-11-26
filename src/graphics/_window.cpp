@@ -9,6 +9,10 @@ size_t count = 0;
 
 namespace {
 
+constexpr int32_t CLOSE_BTN_SIZE = 16;
+constexpr int32_t CLOSE_BTN_MARGIN = 4;
+bool prev_left_down = false;
+
 void copy_title(char* dst, const char* src) {
     size_t i = 0;
     if (src != nullptr) {
@@ -18,6 +22,62 @@ void copy_title(char* dst, const char* src) {
         }
     }
     dst[i] = '\0';
+}
+
+int32_t titlebar_height(const Window& win) {
+    return (win.h < TITLE_H) ? win.h : TITLE_H;
+}
+
+bool has_close_button(const Window& win) {
+    int32_t th = titlebar_height(win);
+    return win.w >= 28 && th >= 18;
+}
+
+void close_button_rect(const Window& win, int32_t& bx, int32_t& by, int32_t& bw, int32_t& bh) {
+    int32_t th = titlebar_height(win);
+    bw = CLOSE_BTN_SIZE;
+    bh = CLOSE_BTN_SIZE;
+    bx = win.x + win.w - bw - CLOSE_BTN_MARGIN;
+    by = win.y + (th - bh) / 2;
+}
+
+bool point_in_rect(int32_t px, int32_t py, int32_t rx, int32_t ry, int32_t rw, int32_t rh) {
+    return px >= rx && px < (rx + rw) && py >= ry && py < (ry + rh);
+}
+
+void focus_top_visible() {
+    clear_focus();
+    size_t n = (count < MAX_WINDOWS) ? count : MAX_WINDOWS;
+    for (size_t i = n; i > 0; --i) {
+        Window& w = windows[i - 1];
+        if (w.visible) {
+            w.focused = true;
+            return;
+        }
+    }
+}
+
+void bring_to_front(size_t idx) {
+    size_t n = (count < MAX_WINDOWS) ? count : MAX_WINDOWS;
+    if (n == 0 || idx >= n) {
+        return;
+    }
+    if (idx + 1 < n) {
+        Window target = windows[idx];
+        for (size_t i = idx; i + 1 < n; ++i) {
+            windows[i] = windows[i + 1];
+        }
+        windows[n - 1] = target;
+    }
+    clear_focus();
+    windows[n - 1].focused = true;
+}
+
+void stop_all_drags() {
+    size_t n = (count < MAX_WINDOWS) ? count : MAX_WINDOWS;
+    for (size_t i = 0; i < n; ++i) {
+        windows[i].dragging = false;
+    }
 }
 
 void draw_client_content(const Window& win, int32_t cx, int32_t cy, int32_t cw, int32_t ch) {
@@ -42,6 +102,7 @@ void draw_client_content(const Window& win, int32_t cx, int32_t cy, int32_t cw, 
 
 void init() {
     count = 0;
+    prev_left_down = false;
     for (size_t i = 0; i < MAX_WINDOWS; ++i) {
         windows[i].id = 0;
         windows[i].kind = WindowKind::None;
@@ -89,6 +150,86 @@ Window* create(WindowKind kind, const char* title, int32_t x, int32_t y, int32_t
     return &win;
 }
 
+bool on_mouse(int32_t mx, int32_t my, bool left_down) {
+    bool changed = false;
+    bool pressed_edge = left_down && !prev_left_down;
+    bool released_edge = !left_down && prev_left_down;
+    prev_left_down = left_down;
+
+    size_t n = (count < MAX_WINDOWS) ? count : MAX_WINDOWS;
+
+    if (released_edge) {
+        for (size_t i = 0; i < n; ++i) {
+            if (windows[i].dragging) {
+                windows[i].dragging = false;
+                changed = true;
+            }
+        }
+        return changed;
+    }
+
+    if (left_down && !pressed_edge) {
+        for (size_t i = 0; i < n; ++i) {
+            Window& w = windows[i];
+            if (w.visible && w.dragging) {
+                int32_t new_x = mx - w.drag_offset_x;
+                int32_t new_y = my - w.drag_offset_y;
+                if (new_y < 0) {
+                    new_y = 0;
+                }
+                if (new_x != w.x || new_y != w.y) {
+                    w.x = new_x;
+                    w.y = new_y;
+                    changed = true;
+                }
+                return changed;
+            }
+        }
+        return false;
+    }
+
+    if (!pressed_edge) {
+        return false;
+    }
+
+    stop_all_drags();
+
+    for (size_t i = n; i > 0; --i) {
+        size_t idx = i - 1;
+        Window& w = windows[idx];
+        if (!w.visible || w.w <= 0 || w.h <= 0) {
+            continue;
+        }
+        if (!point_in_rect(mx, my, w.x, w.y, w.w, w.h)) {
+            continue;
+        }
+
+        if (has_close_button(w)) {
+            int32_t bx, by, bw, bh;
+            close_button_rect(w, bx, by, bw, bh);
+            if (point_in_rect(mx, my, bx, by, bw, bh)) {
+                w.visible = false;
+                w.focused = false;
+                w.dragging = false;
+                focus_top_visible();
+                return true;
+            }
+        }
+
+        bring_to_front(idx);
+        Window& top = windows[n - 1];
+        int32_t th = titlebar_height(top);
+        if (point_in_rect(mx, my, top.x, top.y, top.w, th)) {
+            top.dragging = true;
+            top.drag_offset_x = mx - top.x;
+            top.drag_offset_y = my - top.y;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 void draw_one(const Window& win) {
     if (!win.visible || win.w <= 0 || win.h <= 0) {
         return;
@@ -102,14 +243,13 @@ void draw_one(const Window& win) {
 
     Framebuffer::fill_rect(win.x, win.y, win.w, win.h, bg_col);
 
-    int32_t th = (win.h < TITLE_H) ? win.h : TITLE_H;
+    int32_t th = titlebar_height(win);
     Framebuffer::fill_rect(win.x, win.y, win.w, th, title_bg);
 
-    if (win.w >= 28 && th >= 18) {
-        int32_t btn_size = 16;
-        int32_t bx = win.x + win.w - btn_size - 4;
-        int32_t by = win.y + (th - btn_size) / 2;
-        Framebuffer::fill_rect(bx, by, btn_size, btn_size, close_bg);
+    if (has_close_button(win)) {
+        int32_t bx, by, bw, bh;
+        close_button_rect(win, bx, by, bw, bh);
+        Framebuffer::fill_rect(bx, by, bw, bh, close_bg);
         Font8x16::draw_text(bx + 4, win.y + (th - 16) / 2, "x", text_col);
     }
 
@@ -142,4 +282,4 @@ void draw_all() {
     }
 }
 
-} 
+}

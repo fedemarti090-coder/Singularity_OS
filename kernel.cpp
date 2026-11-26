@@ -129,6 +129,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         WindowManager::init();
         if (fb_ok) {
             WindowManager::create(WindowKind::Shell, "Singularity Shell", 120, 90, 420, 260);
+            WindowManager::create(WindowKind::Files, "Singularity File", 150, 110, 420, 260);
         }
 
         if (initrd_ok) {
@@ -179,8 +180,12 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
     uint8_t last_rtc_sec = 0xFF;
     while (true) {
+        const auto& m = Mouse::state();
+        bool left_down = m.left_button;
+        bool win_changed = WindowManager::on_mouse(m.x, m.y, left_down);
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
-        bool mouse_changed = Mouse::state().dirty;
+        bool mouse_changed = m.dirty || win_changed;
         bool time_changed = (now_sec != last_rtc_sec);
 
         if (fb_ok && (mouse_changed || time_changed)) {
