@@ -15,11 +15,11 @@
 #include "paging.hpp"
 #include "tss.hpp"
 #include "task.hpp"
+#include "framebuffer.hpp"
+#include "bmp.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
-
-// ES di 2 task
 
 static void demo_task_a(void*) {
     Serial::print_line("[TASK A] entered", Serial::COM1);
@@ -79,14 +79,15 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Keyboard::init();
     term.print("PS/2 Keyboard ready.", "yellow");
 
-    
-
     if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
         Heap::init(16);
         Paging::init(32u * 1024u * 1024u);
 
-        if (InitRd::init(mb_info)) {
+        bool fb_ok = Framebuffer::init(mb_info);
+        bool initrd_ok = InitRd::init(mb_info);
+
+        if (initrd_ok) {
             for (size_t i = 0; i < InitRd::count(); ++i) {
                 const InitRdEntry* e = InitRd::get_at(i);
                 if (e != nullptr && !e->is_dir) {
@@ -97,6 +98,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
                     Serial::print_line(" bytes)", Serial::COM1);
                 }
             }
+            Wallpaper::load_from_initrd("wallpaper.bmp");
         }
 
         Scheduler::init();
@@ -113,6 +115,14 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
                 term.print(buf, "lightgreen");
             }
             Heap::free(buf);
+        }
+
+        if (fb_ok) {
+            Framebuffer::clear(Framebuffer::rgb(0, 0, 0));
+            if (Wallpaper::is_loaded()) {
+                Wallpaper::draw_to_backbuffer();
+            }
+            Framebuffer::swap_buffers();
         }
 
         Serial::print("[PMM] Free frames: ", Serial::COM1);

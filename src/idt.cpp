@@ -1,9 +1,6 @@
 #include "idt.hpp"
-#include "vga.hpp"
-
-#include "idt.hpp"
 #include "pic.hpp"
-#include "vga.hpp"
+#include "serial.hpp"
 
 extern "C" void idt_load(uint32_t idtr_addr);
 extern "C" void isr0();
@@ -44,9 +41,21 @@ void register_irq_handler(uint8_t irq, IrqCallback cb) {
 }
 
 extern "C" void isr_handler(Registers* regs) {
-    VgaTerminal term;
-    term.print("CPU Exception!", "lightred");
-    (void)regs;
+    Serial::print("[CPU EXC] int=", Serial::COM1);
+    Serial::print_dec(static_cast<int32_t>(regs->int_no), Serial::COM1);
+    Serial::print(" err=", Serial::COM1);
+    Serial::print_hex32(regs->err_code, Serial::COM1);
+    Serial::print(" eip=", Serial::COM1);
+    Serial::print_hex32(regs->eip, Serial::COM1);
+
+    if (regs->int_no == 14) {
+        uint32_t cr2 = 0;
+        asm volatile("mov %%cr2, %0" : "=r"(cr2));
+        Serial::print(" cr2=", Serial::COM1);
+        Serial::print_hex32(cr2, Serial::COM1);
+    }
+    Serial::print_line("", Serial::COM1);
+
     while (true) {
         asm volatile("cli; hlt");
     }

@@ -19,12 +19,12 @@ Boot e driver di basr
 Framebuffer Lineare
 [X] Aggiungere flag video nell'header Multiboot (boot.asm)
 [X] Aggiornare MultibootInfo per leggere indirizzo, pitch, larghezza, altezza e bpp del framebuffer
-[ ] Mappare l'area fisica del framebuffer nel Paging e allocare un backbuffer su Heap
-[ ] Implementare driver Framebuffer (put_pixel, fill_rect, swap_buffers)
+[X] Mappare l'area fisica del framebuffer nel Paging e allocare un backbuffer su Heap
+[X] Implementare driver Framebuffer (put_pixel, fill_rect, swap_buffers)
 
 Immagine di Sfondo da InitRd
-[ ] Aggiungere un'immagine wallpaper.bmp (24/32-bit non compressa) in initrd_root
-[ ] Implementare parser BMP minimale leggendo il file tramite InitRd
+[X] Aggiungere un'immagine wallpaper.bmp (24/32-bit non compressa) in initrd_root
+[X] Implementare parser BMP minimale leggendo il file tramite InitRd
 [ ] Decodificare lo sfondo in un buffer dedicato all'avvio e copiarlo sul backbuffer ad ogni frame
 
 Font Bitmap & Testo Grafico

@@ -1,4 +1,5 @@
 #include "initrd.hpp"
+#include "paging.hpp"
 #include "memory.hpp"
 #include "serial.hpp"
 
@@ -124,6 +125,16 @@ bool InitRd::init(const MultibootInfo* mb_info) {
     const uint32_t start = mods[0].mod_start;
     const uint32_t end = mods[0].mod_end;
 
+    Serial::print("[INITRD] mod_start=", Serial::COM1);
+    Serial::print_hex32(start, Serial::COM1);
+    Serial::print(" mod_end=", Serial::COM1);
+    Serial::print_hex32(end, Serial::COM1);
+    Serial::print(" phys_start=", Serial::COM1);
+    Serial::print_hex32(Paging::get_phys_addr(start), Serial::COM1);
+    Serial::print(" phys_end=", Serial::COM1);
+    Serial::print_hex32(Paging::get_phys_addr(end - 1u), Serial::COM1);
+    Serial::print_line("", Serial::COM1);
+
     if (end <= start) {
         Serial::print_line("[INITRD] Invalid module range", Serial::COM1);
         return false;
@@ -133,9 +144,14 @@ bool InitRd::init(const MultibootInfo* mb_info) {
     const auto* archive = reinterpret_cast<const uint8_t*>(start);
     size_t offset = 0;
 
-    while (offset + TAR_BLOCK_SIZE <= total_size) {
+    while (offset + TAR_BLOCK_SIZE <= total_size && entry_count < MAX_ENTRIES) {
         const auto* hdr = reinterpret_cast<const TarHeader*>(archive + offset);
         if (is_all_zero(reinterpret_cast<const uint8_t*>(hdr), TAR_BLOCK_SIZE)) {
+            break;
+        }
+
+        if (strncmp(hdr->magic, "ustar", 5) != 0) {
+            Serial::print_line("[INITRD] Stopping parse: non-ustar block reached", Serial::COM1);
             break;
         }
 
@@ -144,12 +160,23 @@ bool InitRd::init(const MultibootInfo* mb_info) {
         const size_t data_blocks = (file_size + TAR_BLOCK_SIZE - 1u) / TAR_BLOCK_SIZE;
         const size_t next_offset = offset + TAR_BLOCK_SIZE + data_blocks * TAR_BLOCK_SIZE;
 
-        if (next_offset > total_size) {
+        if (next_offset > total_size || next_offset < offset) {
+            Serial::print_line("[INITRD] Truncated tar entry, stopping", Serial::COM1);
             break;
         }
 
-        const char* clean_name = normalize_path(hdr->name);
-        if (clean_name[0] != '\0' && entry_count < MAX_ENTRIES) {
+        static char name_storage[MAX_ENTRIES][128];
+        size_t pos = 0;
+        for (size_t i = 0; i < sizeof(hdr->name) && hdr->name[i] != '\0'; ++i) {
+            char c = hdr->name[i];
+            if (c >= 32 && c < 127 && pos + 1 < sizeof(name_storage[entry_count])) {
+                name_storage[entry_count][pos++] = c;
+            }
+        }
+        name_storage[entry_count][pos] = '\0';
+
+        const char* clean_name = normalize_path(name_storage[entry_count]);
+        if (clean_name[0] != '\0') {
             bool dir = (hdr->typeflag == '5');
             size_t name_len = strlen(clean_name);
             if (name_len > 0 && clean_name[name_len - 1] == '/') {
@@ -185,7 +212,6 @@ const InitRdEntry* InitRd::get_at(size_t index) {
         return nullptr;
     }
     return &entries[index];
-
 }
 
 static const char* strip_leading_dots_slashes(const char* s) {

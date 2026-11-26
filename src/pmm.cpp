@@ -108,6 +108,28 @@ void Pmm::init(const MultibootInfo* mb_info, uint32_t kernel_start, uint32_t ker
         if (mb_info->flags & MULTIBOOT_FLAG_MMAP) {
             reserve_region(mb_info->mmap_addr, mb_info->mmap_length);
         }
+        if (mb_info->flags & (1u << 3)) {
+            const auto* raw_bytes = reinterpret_cast<const uint8_t*>(mb_info);
+            uint32_t mods_count = *reinterpret_cast<const uint32_t*>(raw_bytes + 20);
+            uint32_t mods_addr  = *reinterpret_cast<const uint32_t*>(raw_bytes + 24);
+
+            struct MbMod {
+                uint32_t mod_start;
+                uint32_t mod_end;
+                uint32_t string;
+                uint32_t reserved;
+            };
+
+            if (mods_count > 0 && mods_addr != 0) {
+                reserve_region(mods_addr, mods_count * sizeof(MbMod));
+                const auto* mods = reinterpret_cast<const MbMod*>(mods_addr);
+                for (uint32_t i = 0; i < mods_count; ++i) {
+                    if (mods[i].mod_end > mods[i].mod_start) {
+                        reserve_region(mods[i].mod_start, mods[i].mod_end - mods[i].mod_start);
+                    }
+                }
+            }
+        }
     }
 }
 

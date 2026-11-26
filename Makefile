@@ -33,7 +33,9 @@ OBJS = \
 	$(BUILD_DIR)/paging.o \
 	$(BUILD_DIR)/tss.o \
 	$(BUILD_DIR)/task.o \
-	$(BUILD_DIR)/initrd.o
+	$(BUILD_DIR)/initrd.o \
+	$(BUILD_DIR)/framebuffer.o \
+	$(BUILD_DIR)/bmp.o
 
 all: $(ISO_PATH)
 
@@ -45,7 +47,7 @@ $(BUILD_DIR)/switch.o: src/switch.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) src/switch.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp include/gdt.hpp include/idt.hpp include/pic.hpp include/keyboard.hpp include/multiboot.hpp include/pmm.hpp include/memory.hpp include/heap.hpp include/serial.hpp include/timer.hpp include/shell.hpp include/paging.hpp include/tss.hpp include/task.hpp include/initrd.hpp
+$(BUILD_DIR)/kernel.o: kernel.cpp include/vga.hpp include/gdt.hpp include/idt.hpp include/pic.hpp include/keyboard.hpp include/multiboot.hpp include/pmm.hpp include/memory.hpp include/heap.hpp include/serial.hpp include/timer.hpp include/shell.hpp include/paging.hpp include/tss.hpp include/task.hpp include/initrd.hpp include/framebuffer.hpp include/bmp.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
@@ -65,7 +67,7 @@ $(BUILD_DIR)/idt_load.o: src/idt_load.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) src/idt_load.asm -o $@
 
-$(BUILD_DIR)/idt.o: src/idt.cpp include/idt.hpp include/pic.hpp include/vga.hpp
+$(BUILD_DIR)/idt.o: src/idt.cpp include/idt.hpp include/pic.hpp include/vga.hpp include/serial.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c src/idt.cpp -o $@
 
@@ -85,7 +87,7 @@ $(BUILD_DIR)/memory.o: src/memory.cpp include/memory.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c src/memory.cpp -o $@
 
-$(BUILD_DIR)/heap.o: src/heap.cpp include/heap.hpp include/pmm.hpp include/memory.hpp
+$(BUILD_DIR)/heap.o: src/heap.cpp include/heap.hpp include/pmm.hpp include/memory.hpp include/paging.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c src/heap.cpp -o $@
 
@@ -116,6 +118,14 @@ $(BUILD_DIR)/task.o: src/task.cpp include/task.hpp include/heap.hpp include/memo
 $(BUILD_DIR)/initrd.o: src/initrd.cpp include/initrd.hpp include/multiboot.hpp include/memory.hpp include/serial.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c src/initrd.cpp -o $@
+
+$(BUILD_DIR)/framebuffer.o: src/framebuffer.cpp include/framebuffer.hpp include/multiboot.hpp include/paging.hpp include/pmm.hpp include/memory.hpp include/serial.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c src/framebuffer.cpp -o $@
+
+$(BUILD_DIR)/bmp.o: src/bmp.cpp include/bmp.hpp include/initrd.hpp include/framebuffer.hpp include/paging.hpp include/pmm.hpp include/memory.hpp include/serial.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c src/bmp.cpp -o $@
 
 $(INITRD_TAR): $(wildcard $(INITRD_DIR)/*)
 	mkdir -p $(BUILD_DIR) $(INITRD_DIR)

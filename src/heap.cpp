@@ -1,6 +1,7 @@
 #include "heap.hpp"
 #include "pmm.hpp"
 #include "memory.hpp"
+#include "paging.hpp"
 
 Heap::BlockHeader* Heap::head = nullptr;
 size_t Heap::heap_total_bytes = 0;
@@ -66,6 +67,7 @@ bool Heap::expand(size_t min_bytes) {
     if (first_frame == 0) {
         return false;
     }
+    Paging::map_page(first_frame, first_frame, Paging::FLAG_PRESENT | Paging::FLAG_RW);
 
     uint32_t expected_next = first_frame + Pmm::PAGE_SIZE;
     size_t contiguous_pages = 1;
@@ -76,6 +78,7 @@ bool Heap::expand(size_t min_bytes) {
             break;
         }
         if (frame == expected_next) {
+            Paging::map_page(frame, frame, Paging::FLAG_PRESENT | Paging::FLAG_RW);
             expected_next += Pmm::PAGE_SIZE;
             ++contiguous_pages;
         } else {

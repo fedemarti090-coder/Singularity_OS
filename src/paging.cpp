@@ -42,6 +42,7 @@ uint32_t* Paging::get_or_create_pt(uint32_t pd_idx, bool create, uint32_t pt_fla
 
     uint32_t pt_frame = Pmm::alloc_frame();
     if (pt_frame == 0) {
+        Serial::print_line("[PAGING] PMM out of frames for page table!", Serial::COM1);
         return nullptr;
     }
 
