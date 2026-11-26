@@ -41,10 +41,11 @@ Barra delle Applicazioni (Taskbar)
 [X] Disegnare la barra in basso a tutta larghezza
 [X] Aggiungere pulsante Start con popup menu delle app
 [X] Aggiungere elenco pulsanti per le finestre aperte
-[ ] Aggiungere orologio / uptime a destra collegato a Timer::ticks()
+[X] Aggiungere orologio / uptime a destra collegato a Timer::ticks()
+[X] Sincronizzazione con orario dall'hardware
 
 Mini Window Manager & App Base
-[ ] Definire struttura Window (posizione, dimensioni, titolo, visibilita, focus)
+[X] Definire struttura Window (posizione, dimensioni, titolo, visibilita, focus)
 [ ] Gestire drag dalla titlebar, focus al click e pulsante di chiusura [X]
 [ ] Collegare finestra Terminale (Shell grafica)
 [ ] Collegare finestra File Viewer per esplorare e aprire file da InitRd

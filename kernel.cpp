@@ -23,6 +23,7 @@
 #include "icons.hpp"
 #include "taskbar.hpp"
 #include "rtc.hpp"
+#include "_window.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -46,16 +47,26 @@ static void render_frame(bool fb_ok) {
     if (!fb_ok) {
         return;
     }
+    
     const auto& m = Mouse::state();
     Framebuffer::clear(Framebuffer::rgb(0, 0, 0));
     if (Wallpaper::is_loaded()) {
         Wallpaper::draw_to_backbuffer();
     }
+
+    
+    WindowManager::draw_all();
+    //Framebuffer::fill_rect(120, 90, 420, 260, Framebuffer::rgb(255, 0, 128));
+
     Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
+
+    
     Taskbar::draw();
+
     Cursor::draw(m.x, m.y);
     Framebuffer::swap_buffers();
     Mouse::clear_dirty();
+    
 }
 
 extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
@@ -83,6 +94,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Serial::print_line("[BOOT] Singularity serial COM1 initialized", Serial::COM1);
 
     Mouse::init();
+
+    
 
     if (mb_info->flags & MULTIBOOT_FLAG_FRAMEBUFFER) {
         Serial::print("[FB] Addr: ", Serial::COM1);
@@ -112,6 +125,11 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
         fb_ok = Framebuffer::init(mb_info);
         bool initrd_ok = InitRd::init(mb_info);
+
+        WindowManager::init();
+        if (fb_ok) {
+            WindowManager::create(WindowKind::Shell, "Singularity Shell", 120, 90, 420, 260);
+        }
 
         if (initrd_ok) {
             for (size_t i = 0; i < InitRd::count(); ++i) {

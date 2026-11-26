@@ -9,6 +9,7 @@ LDFLAGS = -m elf_i386 -T linker.ld -nostdlib
 QEMU = "/mnt/c/Program Files/qemu/qemu-system-x86_64.exe"
 BUILD_DIR = build
 SRC_CORE = src/core
+SRC_GFX = src/graphics
 INC_CORE = include/core
 INC_GFX = include/graphics
 INITRD_DIR = initrd_root
@@ -39,7 +40,8 @@ OBJS = \
 	$(BUILD_DIR)/task.o \
 	$(BUILD_DIR)/initrd.o \
 	$(BUILD_DIR)/framebuffer.o \
-	$(BUILD_DIR)/bmp.o
+	$(BUILD_DIR)/bmp.o \
+	$(BUILD_DIR)/_window.o
 
 all: $(ISO_PATH)
 
@@ -51,7 +53,7 @@ $(BUILD_DIR)/switch.o: $(SRC_CORE)/switch.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) $(SRC_CORE)/switch.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp $(INC_CORE)/vga.hpp $(INC_CORE)/gdt.hpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/keyboard.hpp $(INC_CORE)/mouse.hpp $(INC_CORE)/cursor.hpp $(INC_GFX)/icons.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/serial.hpp $(INC_CORE)/timer.hpp $(INC_CORE)/shell.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/tss.hpp $(INC_CORE)/task.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/bmp.hpp
+$(BUILD_DIR)/kernel.o: kernel.cpp $(INC_CORE)/vga.hpp $(INC_CORE)/gdt.hpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/keyboard.hpp $(INC_CORE)/mouse.hpp $(INC_CORE)/cursor.hpp $(INC_GFX)/icons.hpp $(INC_GFX)/_window.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/serial.hpp $(INC_CORE)/timer.hpp $(INC_CORE)/shell.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/tss.hpp $(INC_CORE)/task.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/bmp.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
@@ -134,6 +136,10 @@ $(BUILD_DIR)/framebuffer.o: $(SRC_CORE)/framebuffer.cpp $(INC_CORE)/framebuffer.
 $(BUILD_DIR)/bmp.o: $(SRC_CORE)/bmp.cpp $(INC_CORE)/bmp.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/serial.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/bmp.cpp -o $@
+
+$(BUILD_DIR)/_window.o: $(SRC_GFX)/_window.cpp $(INC_GFX)/_window.hpp $(INC_CORE)/framebuffer.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $(SRC_GFX)/_window.cpp -o $@
 
 $(INITRD_TAR): $(wildcard $(INITRD_DIR)/*)
 	mkdir -p $(BUILD_DIR) $(INITRD_DIR)
