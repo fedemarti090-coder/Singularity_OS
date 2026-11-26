@@ -51,3 +51,11 @@ Mini Window Manager & App Base
 [X] Collegare finestra File Viewer per esplorare e aprire file da InitRd
 [X] Editor di Testo
 [!] Visualizzatore di immagini
+
+Resize e gestibilita
+[ ] Gestione resize della finestra
+[ ] Gestione reesize dei testi interni etc ( in base alla finestra)
+
+Giochi
+[ ] Ping
+[ ] Snake
