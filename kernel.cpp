@@ -60,6 +60,22 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Serial::init();
     Serial::print_line("[BOOT] Singularity serial COM1 initialized", Serial::COM1);
 
+    if (mb_info->flags & MULTIBOOT_FLAG_FRAMEBUFFER) {
+        Serial::print("[FB] Addr: ", Serial::COM1);
+        Serial::print_hex32(static_cast<uint32_t>(mb_info->framebuffer_addr), Serial::COM1);
+        Serial::print(" | ", Serial::COM1);
+        Serial::print_dec(mb_info->framebuffer_width, Serial::COM1);
+        Serial::print("x", Serial::COM1);
+        Serial::print_dec(mb_info->framebuffer_height, Serial::COM1);
+        Serial::print("x", Serial::COM1);
+        Serial::print_dec(mb_info->framebuffer_bpp, Serial::COM1);
+        Serial::print(" | Pitch: ", Serial::COM1);
+        Serial::print_dec(mb_info->framebuffer_pitch, Serial::COM1);
+        Serial::print_line("", Serial::COM1);
+    } else {
+        Serial::print_line("[FB] Flag framebuffer NON presente!", Serial::COM1);
+    }
+
     Keyboard::init();
     term.print("PS/2 Keyboard ready.", "yellow");
 

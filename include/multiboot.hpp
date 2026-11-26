@@ -1,8 +1,10 @@
 #pragma once
 #include <stdint.h>
 
-static constexpr uint32_t MULTIBOOT_BOOTLOADER_MAGIC = 0x2BADB002; // indirizzo del multi boot
+static constexpr uint32_t MULTIBOOT_BOOTLOADER_MAGIC = 0x2BADB002;
 static constexpr uint32_t MULTIBOOT_FLAG_MMAP        = (1 << 6);
+static constexpr uint32_t MULTIBOOT_FLAG_VBE         = (1 << 11);
+static constexpr uint32_t MULTIBOOT_FLAG_FRAMEBUFFER = (1 << 12);
 static constexpr uint32_t MULTIBOOT_MEMORY_AVAILABLE = 1;
 
 struct __attribute__((packed)) MultibootMmapEntry {
@@ -23,4 +25,28 @@ struct __attribute__((packed)) MultibootInfo {
     uint32_t syms[4];
     uint32_t mmap_length;
     uint32_t mmap_addr;
+
+    // Campi intermedi Multiboot 1 (necessari per allineare l'offset del framebuffer)
+    uint32_t drives_length;
+    uint32_t drives_addr;
+    uint32_t config_table;
+    uint32_t boot_loader_name;
+    uint32_t apm_table;
+
+    // VBE info
+    uint32_t vbe_control_info;
+    uint32_t vbe_mode_info;
+    uint16_t vbe_mode;
+    uint16_t vbe_interface_seg;
+    uint16_t vbe_interface_off;
+    uint16_t vbe_interface_len;
+
+    // Framebuffer info (validi se flags & MULTIBOOT_FLAG_FRAMEBUFFER)
+    uint64_t framebuffer_addr;
+    uint32_t framebuffer_pitch;
+    uint32_t framebuffer_width;
+    uint32_t framebuffer_height;
+    uint8_t  framebuffer_bpp;
+    uint8_t  framebuffer_type; // 1 = RGB diretto
+    uint8_t  color_info[6];
 };

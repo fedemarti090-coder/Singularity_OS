@@ -18,7 +18,7 @@ Boot e driver di basr
 
 Framebuffer Lineare
 [X] Aggiungere flag video nell'header Multiboot (boot.asm)
-[ ] Aggiornare MultibootInfo per leggere indirizzo, pitch, larghezza, altezza e bpp del framebuffer
+[X] Aggiornare MultibootInfo per leggere indirizzo, pitch, larghezza, altezza e bpp del framebuffer
 [ ] Mappare l'area fisica del framebuffer nel Paging e allocare un backbuffer su Heap
 [ ] Implementare driver Framebuffer (put_pixel, fill_rect, swap_buffers)
 
