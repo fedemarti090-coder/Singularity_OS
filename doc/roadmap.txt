@@ -1,3 +1,4 @@
+Boot e driver di basr
 [X] Boot
 [X] driver VGA
 [X] cursore
@@ -13,4 +14,36 @@
 [X] Paging (Page Directory / Page Table)
 [X] Ring 3 (User Mode) + TSS + syscall
 [X] Multitasking / scheduler
-[ ] File system semplice / initrd
+[X] File system semplice / initrd
+
+Framebuffer Lineare
+[X] Aggiungere flag video nell'header Multiboot (boot.asm)
+[ ] Aggiornare MultibootInfo per leggere indirizzo, pitch, larghezza, altezza e bpp del framebuffer
+[ ] Mappare l'area fisica del framebuffer nel Paging e allocare un backbuffer su Heap
+[ ] Implementare driver Framebuffer (put_pixel, fill_rect, swap_buffers)
+
+Immagine di Sfondo da InitRd
+[ ] Aggiungere un'immagine wallpaper.bmp (24/32-bit non compressa) in initrd_root
+[ ] Implementare parser BMP minimale leggendo il file tramite InitRd
+[ ] Decodificare lo sfondo in un buffer dedicato all'avvio e copiarlo sul backbuffer ad ogni frame
+
+Font Bitmap & Testo Grafico
+[ ] Integrare tabella font bitmap 8x16 (font.hpp)
+[ ] Implementare draw_char e draw_string sul Framebuffer
+
+Driver Mouse PS/2 & Cursore
+[ ] Inizializzare porta ausiliaria PS/2 e abilitare IRQ 12 su PIC e IDT
+[ ] Decodificare pacchetti mouse a 3 byte aggiornando coordinate (mouse_x, mouse_y) e click
+[ ] Disegnare il cursore sopra tutti i layer prima dello swap_buffers
+
+Barra delle Applicazioni (Taskbar)
+[ ] Disegnare la barra in basso a tutta larghezza
+[ ] Aggiungere pulsante Start con popup menu delle app
+[ ] Aggiungere elenco pulsanti per le finestre aperte
+[ ] Aggiungere orologio / uptime a destra collegato a Timer::ticks()
+
+Mini Window Manager & App Base
+[ ] Definire struttura Window (posizione, dimensioni, titolo, visibilita, focus)
+[ ] Gestire drag dalla titlebar, focus al click e pulsante di chiusura [X]
+[ ] Collegare finestra Terminale (Shell grafica)
+[ ] Collegare finestra File Viewer per esplorare e aprire file da InitRd
