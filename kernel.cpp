@@ -22,6 +22,7 @@
 #include "cursor.hpp"
 #include "icons.hpp"
 #include "taskbar.hpp"
+#include "rtc.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -41,49 +42,6 @@ static void demo_task_b(void*) {
     }
 }
 
-static void draw_taskbar() {
-    const int32_t bar_h = 36;
-    const int32_t bar_y = static_cast<int32_t>(Framebuffer::height()) - bar_h;
-    const int32_t fb_w  = static_cast<int32_t>(Framebuffer::width());
-
-    const int32_t btn_y = bar_y + 4;
-    const int32_t btn_h = 28;
-    const int32_t ico_y = bar_y + 10;
-    const int32_t txt_y = bar_y + 10;
-
-    const uint32_t bar_bg     = Framebuffer::rgb(17, 17, 17);
-    const uint32_t bar_border = Framebuffer::rgb(45, 48, 56);
-    const uint32_t btn_bg     = Framebuffer::rgb(32, 32, 32);
-    const uint32_t text_col   = Framebuffer::rgb(245, 247, 250);
-
-    Framebuffer::fill_rect(0, bar_y, fb_w, bar_h, bar_bg);
-    Framebuffer::fill_rect(0, bar_y, fb_w, 1, bar_border);
-
-    // Start
-    const int32_t start_x = 6;
-    const int32_t start_w = 88;
-    Framebuffer::fill_rect(start_x, btn_y, start_w, btn_h, btn_bg);
-    Icons::draw(IconId::Start, start_x + 6, ico_y);
-    Font8x16::draw_text(start_x + 28, txt_y, "Start", text_col);
-
-    // Shell
-    const int32_t shell_x = start_x + start_w + 6;
-    const int32_t shell_w = 96;
-    Framebuffer::fill_rect(shell_x, btn_y, shell_w, btn_h, btn_bg);
-    Icons::draw(IconId::Terminal, shell_x + 6, ico_y);
-    Font8x16::draw_text(shell_x + 28, txt_y, "Shell", text_col);
-
-    // File
-    const int32_t file_x = shell_x + shell_w + 6;
-    const int32_t file_w = 88;
-    Framebuffer::fill_rect(file_x, btn_y, file_w, btn_h, btn_bg);
-    Icons::draw(IconId::Files, file_x + 6, ico_y);
-    Font8x16::draw_text(file_x + 28, txt_y, "File", text_col);
-
-    // Orologio / Uptime a destra
-    Taskbar::draw_uptime_clock(bar_y, fb_w);
-}
-
 static void render_frame(bool fb_ok) {
     if (!fb_ok) {
         return;
@@ -94,7 +52,7 @@ static void render_frame(bool fb_ok) {
         Wallpaper::draw_to_backbuffer();
     }
     Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
-    draw_taskbar();
+    Taskbar::draw();
     Cursor::draw(m.x, m.y);
     Framebuffer::swap_buffers();
     Mouse::clear_dirty();
@@ -189,7 +147,6 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
             render_frame(fb_ok);
         }
 
-
         Serial::print("[PMM] Free frames: ", Serial::COM1);
         Serial::print_dec(Pmm::free_frames(), Serial::COM1);
         Serial::print_line("", Serial::COM1);
@@ -202,14 +159,14 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
     asm volatile("sti");
 
-    uint32_t last_sec = 0;
+    uint8_t last_rtc_sec = 0xFF;
     while (true) {
-        uint32_t now_sec = Timer::ticks() / 100u;
+        uint8_t now_sec = Rtc::read_time(1).seconds;
         bool mouse_changed = Mouse::state().dirty;
-        bool time_changed = (now_sec != last_sec);
+        bool time_changed = (now_sec != last_rtc_sec);
 
         if (fb_ok && (mouse_changed || time_changed)) {
-            last_sec = now_sec;
+            last_rtc_sec = now_sec;
             render_frame(fb_ok);
         }
         asm volatile("hlt");

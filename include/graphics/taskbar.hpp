@@ -3,7 +3,7 @@
 #include "framebuffer.hpp"
 #include "font.hpp"
 #include "icons.hpp"
-#include "timer.hpp"
+#include "rtc.hpp"
 
 namespace Taskbar {
 
@@ -16,13 +16,8 @@ inline void draw_u32_2digits(int32_t x, int32_t y, uint32_t value, uint32_t colo
     Font8x16::draw_text(x, y, buf, color);
 }
 
-inline void draw_uptime_clock(int32_t bar_y, int32_t fb_w) {
-    static constexpr uint32_t TICKS_PER_SEC = 100u;
-    uint32_t total_seconds = Timer::ticks() / TICKS_PER_SEC;
-
-    uint32_t hours   = (total_seconds / 3600u) % 100u;
-    uint32_t minutes = (total_seconds / 60u) % 60u;
-    uint32_t seconds = total_seconds % 60u;
+inline void draw_clock(int32_t bar_y, int32_t fb_w, int8_t tz_offset_hours = 1) {
+    RtcTime t = Rtc::read_time(tz_offset_hours);
 
     const int32_t box_w = 84;
     const int32_t box_h = 28;
@@ -42,11 +37,11 @@ inline void draw_uptime_clock(int32_t bar_y, int32_t fb_w) {
     Framebuffer::fill_rect(box_x + box_w - 1, box_y, 1, box_h, box_border);
 
     int32_t cx = box_x + 10;
-    draw_u32_2digits(cx, txt_y, hours, text_col);
+    draw_u32_2digits(cx, txt_y, t.hours, text_col);
     Font8x16::draw_text(cx + 16, txt_y, ":", sep_col);
-    draw_u32_2digits(cx + 24, txt_y, minutes, text_col);
+    draw_u32_2digits(cx + 24, txt_y, t.minutes, text_col);
     Font8x16::draw_text(cx + 40, txt_y, ":", sep_col);
-    draw_u32_2digits(cx + 48, txt_y, seconds, text_col);
+    draw_u32_2digits(cx + 48, txt_y, t.seconds, text_col);
 }
 
 inline void draw() {
@@ -88,8 +83,8 @@ inline void draw() {
     Icons::draw(IconId::Files, file_x + 6, ico_y);
     Font8x16::draw_text(file_x + 28, txt_y, "File", text_col);
 
-    // 4. Orologio / Uptime a destra
-    draw_uptime_clock(bar_y, fb_w);
+    // 4. Orologio RTC a destra
+    draw_clock(bar_y, fb_w, 1);
 }
 
 }
