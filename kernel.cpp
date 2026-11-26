@@ -28,45 +28,50 @@
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
 
-static void demo_task_a(void*) {
+static void demo_task_a(void *)
+{
     Serial::print_line("[TASK A] entered", Serial::COM1);
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 3; ++i)
+    {
         Serial::print_line("[TASK A] running", Serial::COM1);
         Scheduler::yield();
     }
 }
 
-static void demo_task_b(void*) {
-    for (int i = 0; i < 3; ++i) {
+static void demo_task_b(void *)
+{
+    for (int i = 0; i < 3; ++i)
+    {
         Serial::print_line("[TASK B] running", Serial::COM1);
         Scheduler::yield();
     }
 }
 
-static void render_frame(bool fb_ok) {
-    if (!fb_ok) {
+static void render_frame(bool fb_ok)
+{
+    if (!fb_ok)
+    {
         return;
     }
-    
-    const auto& m = Mouse::state();
+
+    const auto &m = Mouse::state();
     Framebuffer::clear(Framebuffer::rgb(0, 0, 0));
-    if (Wallpaper::is_loaded()) {
+    if (Wallpaper::is_loaded())
+    {
         Wallpaper::draw_to_backbuffer();
     }
     Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
-    
-    WindowManager::draw_all();
-    //Framebuffer::fill_rect(120, 90, 420, 260, Framebuffer::rgb(255, 0, 128));
 
+    WindowManager::draw_all();
     Taskbar::draw();
 
     Cursor::draw(m.x, m.y);
     Framebuffer::swap_buffers();
     Mouse::clear_dirty();
-    
 }
 
-extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
+extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
+{
     VgaTerminal term;
     g_term = &term;
 
@@ -92,9 +97,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
     Mouse::init();
 
-    
-
-    if (mb_info->flags & MULTIBOOT_FLAG_FRAMEBUFFER) {
+    if (mb_info->flags & MULTIBOOT_FLAG_FRAMEBUFFER)
+    {
         Serial::print("[FB] Addr: ", Serial::COM1);
         Serial::print_hex32(static_cast<uint32_t>(mb_info->framebuffer_addr), Serial::COM1);
         Serial::print(" | ", Serial::COM1);
@@ -106,7 +110,9 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         Serial::print(" | Pitch: ", Serial::COM1);
         Serial::print_dec(mb_info->framebuffer_pitch, Serial::COM1);
         Serial::print_line("", Serial::COM1);
-    } else {
+    }
+    else
+    {
         Serial::print_line("[FB] Flag framebuffer NON presente!", Serial::COM1);
     }
 
@@ -115,7 +121,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
 
     bool fb_ok = false;
 
-    if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
+    if (magic == MULTIBOOT_BOOTLOADER_MAGIC)
+    {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
         Heap::init(16);
         Paging::init(32u * 1024u * 1024u);
@@ -124,16 +131,15 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         bool initrd_ok = InitRd::init(mb_info);
 
         WindowManager::init();
-        if (fb_ok) {
-            WindowManager::create(WindowKind::Files, "Singularity File", 150, 110, 420, 260);
-            WindowManager::create(WindowKind::Shell, "Singularity Shell", 120, 90, 420, 260);
-            
-        }
 
-        if (initrd_ok) {
-            for (size_t i = 0; i < InitRd::count(); ++i) {
-                const InitRdEntry* e = InitRd::get_at(i);
-                if (e != nullptr && !e->is_dir) {
+
+        if (initrd_ok)
+        {
+            for (size_t i = 0; i < InitRd::count(); ++i)
+            {
+                const InitRdEntry *e = InitRd::get_at(i);
+                if (e != nullptr && !e->is_dir)
+                {
                     Serial::print("[INITRD] file: ", Serial::COM1);
                     Serial::print(e->name, Serial::COM1);
                     Serial::print(" (", Serial::COM1);
@@ -150,47 +156,64 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         Scheduler::yield();
         Serial::print_line("[SCHED] Back in kernel_main", Serial::COM1);
 
-        char* buf = static_cast<char*>(Heap::alloc(32));
-        const char* msg = "Singularity Heap OK";
-        if (buf != nullptr) {
+        char *buf = static_cast<char *>(Heap::alloc(32));
+        const char *msg = "Singularity Heap OK";
+        if (buf != nullptr)
+        {
             memcpy(buf, msg, strlen(msg) + 1);
-            if (strcmp(buf, msg) == 0) {
+            if (strcmp(buf, msg) == 0)
+            {
                 term.print(buf, "lightgreen");
             }
             Heap::free(buf);
         }
 
-        if (fb_ok) {
+        if (fb_ok)
+        {
             render_frame(fb_ok);
         }
 
         Serial::print("[PMM] Free frames: ", Serial::COM1);
         Serial::print_dec(Pmm::free_frames(), Serial::COM1);
         Serial::print_line("", Serial::COM1);
-    } else {
+    }
+    else
+    {
         term.print("Multiboot magic mismatch!", "lightred");
     }
 
     Timer::init(100);
     Shell::init();
+    Taskbar::init();
 
     asm volatile("sti");
 
     uint8_t last_rtc_sec = 0xFF;
-    while (true) {
-        const auto& m = Mouse::state();
+    uint32_t last_blink_phase = 0xFFFFFFFFu;
+    while (true)
+    {
+        const auto &m = Mouse::state();
         bool left_down = m.left_button;
 
         bool tb_changed = Taskbar::on_mouse(m.x, m.y, left_down);
         bool win_changed = tb_changed ? false : WindowManager::on_mouse(m.x, m.y, left_down);
+        if (win_changed)
+        {
+            Taskbar::close_start();
+        }
         bool shell_changed = Shell::consume_dirty();
 
+        uint32_t blink_phase = Timer::ticks() / 50u;
+        bool blink_changed = (blink_phase != last_blink_phase);
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
-        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed;
+        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed;
         bool time_changed = (now_sec != last_rtc_sec);
 
-        if (fb_ok && (ui_changed || time_changed)) {
+        if (fb_ok && (ui_changed || time_changed))
+        {
             last_rtc_sec = now_sec;
+            last_blink_phase = blink_phase;
             render_frame(fb_ok);
         }
         asm volatile("hlt");
