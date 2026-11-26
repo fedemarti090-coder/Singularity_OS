@@ -33,8 +33,8 @@ Font Bitmap & Testo Grafico
 [X] Implementare draw_char e draw_string sul Framebuffer
 
 Driver Mouse PS/2 & Cursore
-[ ] Inizializzare porta ausiliaria PS/2 e abilitare IRQ 12 su PIC e IDT
-[ ] Decodificare pacchetti mouse a 3 byte aggiornando coordinate (mouse_x, mouse_y) e click
+[X] Inizializzare porta ausiliaria PS/2 e abilitare IRQ 12 su PIC e IDT
+[X] Decodificare pacchetti mouse a 3 byte aggiornando coordinate (mouse_x, mouse_y) e click
 [ ] Disegnare il cursore sopra tutti i layer prima dello swap_buffers
 
 Barra delle Applicazioni (Taskbar)

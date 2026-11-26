@@ -175,8 +175,12 @@ uint32_t Pmm::used_frames() {
 }
 
 uint32_t Pmm::free_frames() {
-    if (total_frame_count <= used_frame_count) {
-        return 0;
+    uint32_t free_count = 0;
+    uint32_t max_check = (total_frame_count < MAX_FRAMES) ? total_frame_count : MAX_FRAMES;
+    for (uint32_t f = 0; f < max_check; ++f) {
+        if (!test_bit(f)) {
+            ++free_count;
+        }
     }
-    return total_frame_count - used_frame_count;
+    return free_count;
 }

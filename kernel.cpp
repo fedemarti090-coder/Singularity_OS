@@ -18,6 +18,8 @@
 #include "framebuffer.hpp"
 #include "bmp.hpp"
 #include "font.hpp"
+#include "mouse.hpp"
+#include "cursor.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -35,6 +37,21 @@ static void demo_task_b(void*) {
         Serial::print_line("[TASK B] running", Serial::COM1);
         Scheduler::yield();
     }
+}
+
+static void render_frame(bool fb_ok) {
+    if (!fb_ok) {
+        return;
+    }
+    const auto& m = Mouse::state();
+    Framebuffer::clear(Framebuffer::rgb(0, 0, 0));
+    if (Wallpaper::is_loaded()) {
+        Wallpaper::draw_to_backbuffer();
+    }
+    Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
+    Cursor::draw(m.x, m.y);
+    Framebuffer::swap_buffers();
+    Mouse::clear_dirty();
 }
 
 extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
@@ -61,6 +78,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Serial::init();
     Serial::print_line("[BOOT] Singularity serial COM1 initialized", Serial::COM1);
 
+    Mouse::init();
+
     if (mb_info->flags & MULTIBOOT_FLAG_FRAMEBUFFER) {
         Serial::print("[FB] Addr: ", Serial::COM1);
         Serial::print_hex32(static_cast<uint32_t>(mb_info->framebuffer_addr), Serial::COM1);
@@ -80,12 +99,14 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     Keyboard::init();
     term.print("PS/2 Keyboard ready.", "yellow");
 
+    bool fb_ok = false;
+
     if (magic == MULTIBOOT_BOOTLOADER_MAGIC) {
         Pmm::init(mb_info, reinterpret_cast<uint32_t>(kernel_start), reinterpret_cast<uint32_t>(kernel_end));
         Heap::init(16);
         Paging::init(32u * 1024u * 1024u);
 
-        bool fb_ok = Framebuffer::init(mb_info);
+        fb_ok = Framebuffer::init(mb_info);
         bool initrd_ok = InitRd::init(mb_info);
 
         if (initrd_ok) {
@@ -119,14 +140,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
         }
 
         if (fb_ok) {
-            Framebuffer::clear(Framebuffer::rgb(0, 0, 0));
-            if (Wallpaper::is_loaded()) {
-                Wallpaper::draw_to_backbuffer();
-            }
-
-            Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
-
-            Framebuffer::swap_buffers();
+            render_frame(fb_ok);
         }
 
         Serial::print("[PMM] Free frames: ", Serial::COM1);
@@ -142,6 +156,9 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo* mb_info) {
     asm volatile("sti");
 
     while (true) {
+        if (fb_ok && Mouse::state().dirty) {
+            render_frame(fb_ok);
+        }
         asm volatile("hlt");
     }
 }
