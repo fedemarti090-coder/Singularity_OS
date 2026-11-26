@@ -24,6 +24,7 @@
 #include "taskbar.hpp"
 #include "rtc.hpp"
 #include "_window.hpp"
+#include "text_editor.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -206,8 +207,10 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
         uint32_t blink_phase = Timer::ticks() / 50u;
         bool blink_changed = (blink_phase != last_blink_phase);
 
+        bool text_editor_changed = TextEditor::consume_dirty();
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
-        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed;
+        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed;
         bool time_changed = (now_sec != last_rtc_sec);
 
         if (fb_ok && (ui_changed || time_changed))
