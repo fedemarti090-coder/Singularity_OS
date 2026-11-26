@@ -1,62 +1,51 @@
 # Singularity OS
 
-Un sistema operativo *freestanding* **x86 (32-bit)** scritto in **C++20** moderno e assembly, avviato tramite **Multiboot** ed eseguito su **QEMU** con terminale VGA, log su porta seriale (`COM1`), gestione della memoria, scheduling dei task, shell interattiva e filesystem `initrd` in formato USTAR.
+Un sistema operativo *freestanding* **x86 (32-bit)** scritto in **C++20** moderno e assembly, avviato tramite **Multiboot** ed eseguito su **QEMU** con terminale VGA, interfaccia grafica con window manager, log su porta seriale (`COM1`), gestione della memoria, scheduling dei task, shell interattiva e filesystem `initrd` in formato USTAR.
 
-<div align="center"><img src="doc/img/img-11.png" alt="Singularity OS"></div>
+<div align="center"><img src="doc/img/img-12.png" alt="Singularity OS"></div>
 
 ## Funzionalità
 
-* **Boot e Architettura di Base**
+- **Boot e Architettura di Base**
+  - Entry point compatibile Multiboot (`boot.asm`) con flag video e passaggio del controllo a `kernel_main`.
+  - Global Descriptor Table (**GDT**), Task State Segment (**TSS**), Programmable Interrupt Controller (**PIC**) e Interrupt Descriptor Table (**IDT** + ISR per eccezioni CPU e panic).
+  - Conteggio dei tick, delay e timer tramite Programmable Interval Timer (**PIT**) e sincronizzazione oraria con **RTC**.
 
-  * Entry point compatibile Multiboot (`boot.asm`) con passaggio del controllo a `kernel_main`.
+- **Gestione della Memoria**
+  - Physical Memory Manager (**PMM**) basato su memory map Multiboot e bitmap di pagine da 4 KB.
+  - Allocatore **Heap** del kernel (`Heap::alloc` / `Heap::free`, `new` / `delete`) e funzioni base (`memcpy`, `memmove`, `memset`, `memcmp`, `strlen`, `strcmp`, `strncmp`).
+  - Configurazione del **Paging** (Page Directory / Page Table) con *identity mapping*, `invlpg` e caricamento di `CR3`.
 
-  * Global Descriptor Table (**GDT**), Task State Segment (**TSS**), Programmable Interrupt Controller (**PIC**) e Interrupt Descriptor Table (**IDT**).
+- **Multitasking e Scheduling**
+  - Creazione dei task di kernel e *yielding* cooperativo tramite `Scheduler`.
 
-  * Conteggio dei tick tramite Programmable Interval Timer (**PIT**).
+- **Grafica, Mouse, Taskbar e Window Manager**
+  - **Framebuffer lineare** mappato in memoria virtuale con backbuffer, `put_pixel`, `fill_rect` e `swap_buffers`.
+  - **Sfondo da InitRd**: caricamento e decodifica di `wallpaper.bmp` (BMP 24/32-bit non compresso) in un buffer dedicato e disegno su backbuffer ad ogni frame.
+  - **Font bitmap 8x16** per il rendering del testo grafico sul framebuffer.
+  - **Driver Mouse PS/2 & Cursore**: porta ausiliaria PS/2, IRQ 12 su PIC/IDT, pacchetti a 3 byte per coordinate e click, cursore disegnato sopra tutti i layer prima dello swap.
+  - **Taskbar**: barra inferiore a tutta larghezza con pulsante Start e menu popup delle app, elenco finestre aperte, tick/uptime collegato a `Timer::ticks()` e orologio sincronizzato con l'RTC.
+  - **Mini Window Manager & App**: gestione finestre (`Window`), drag dalla titlebar, focus al click, massimizzazione e chiusura, affiancate da **Shell grafica**, **File Viewer** per `initrd`, **Editor di Testo** e **Visualizzatore di immagini** (in lavorazione / da completare).
 
-* **Gestione della Memoria**
-
-  * Physical Memory Manager (**PMM**) per il tracciamento dei frame liberi e totali.
-
-  * Allocatore **Heap** del kernel (`Heap::alloc` / `Heap::free`).
-
-  * Configurazione del **Paging** con *identity mapping* e attivazione di `CR3`.
-
-* **Multitasking e Scheduling**
-
-  * Creazione dei task di kernel e *yielding* cooperativo tramite `Scheduler`.
-
-* **I/O, Shell e InitRd**
-
-  * `VgaTerminal` (modalità testo a colori `80x25` con supporto cursore) e debug log su seriale `Serial` (`COM1`).
-
-  * Input da tastiera PS/2 e `Shell` interattiva (`help`, `clear`, `info`, `ticks`, `mem`, `ls`, `cat <file>`).
-
-  * Sottosistema `InitRd` per il parsing di un archivio USTAR `.tar` (`initrd.tar`) caricato tramite Multiboot.
+- **I/O, Shell e InitRd**
+  - `VgaTerminal` (modalità testo a colori `80x25` con supporto cursore) e log di debug su seriale `Serial` (`COM1`).
+  - Input da tastiera PS/2 (scancode -> ASCII) e `Shell` interattiva (`help`, `clear`, `info`, `ticks`, `mem`, `ls`, `cat <file>`).
+  - Sottosistema `InitRd` per il parsing di un archivio USTAR `.tar` (`initrd.tar`) caricato tramite Multiboot.
 
 ## Struttura del Progetto
 
 ```text
 Singularity/
-├── include/          # Header pubblici (vga.hpp, shell.hpp, initrd.hpp, multiboot.hpp, ...)
-├── src/              # Sorgenti di kernel, driver, memoria, scheduler, shell e initrd
+├── include/          # Header pubblici (vga.hpp, shell.hpp, initrd.hpp, multiboot.hpp, framebuffer.hpp, ...)
+├── src/              # Sorgenti di kernel, driver, memoria, scheduler, shell, GUI e initrd
+├── doc/              # Roadmap e risorse documentali
 ├── build/            # File oggetto, binari compilati, directory ISO e initrd.tar
 ├── Makefile          # Target di compilazione ed esecuzione su QEMU
 ```
 
-## Compilazione ed Esecuzione
-
-### Prerequisiti
-
-* Toolchain C++20 *freestanding* a 32 bit (`g++` con `-m32 -ffreestanding -std=c++20`) e assembler (`nasm` / `as` in base al `Makefile`).
-
-* Utility per ISO GRUB (`grub-mkrescue` / `xorriso`) per generare `build/os.iso`.
-
-* **QEMU** (`qemu-system-x86_64`) per i test.
-
 ## Comandi della Shell
 
-Una volta apparso il prompt `singularity> ` sul display VGA, puoi eseguire:
+Una volta apparso il prompt `singularity> ` sul display VGA (o nella finestra del terminale grafico), puoi eseguire:
 
 | Comando | Descrizione |
 | ----- | ----- |

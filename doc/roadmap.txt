@@ -49,5 +49,5 @@ Mini Window Manager & App Base
 [X] Gestire drag dalla titlebar, focus al click e pulsante di chiusura
 [X] Collegare finestra Terminale (Shell grafica)
 [X] Collegare finestra File Viewer per esplorare e aprire file da InitRd
-[ ] Editor di Testo
-[ ] Visualizzatore di immagini
+[X] Editor di Testo
+[!] Visualizzatore di immagini

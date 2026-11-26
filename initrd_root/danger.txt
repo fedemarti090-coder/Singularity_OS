@@ -1,0 +1,7 @@
+Dopo 3 ore di fila di degub per agggiungere un visualizzatore di immagini
+bug sull allocazione nell heap
+andano a guardare manualmente gli indirizzi nella ram
+
+ho deciso di arrendermi
+
+E METTERMI IN PACE L'ANIMA
