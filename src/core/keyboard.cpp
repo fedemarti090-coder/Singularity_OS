@@ -8,6 +8,7 @@
 #include "pong.hpp"
 #include "snake.hpp"
 #include "tetris.hpp"
+#include "space_invaders.hpp"
 
 extern "C"
 {
@@ -73,6 +74,7 @@ void Keyboard::on_irq()
     bool pong_focused = (active != nullptr && active->visible && active->kind == WindowKind::Pong);
     bool snake_focused = (active != nullptr && active->visible && active->kind == WindowKind::Snake);
     bool tetris_focused = (active != nullptr && active->visible && active->kind == WindowKind::Tetris);
+    bool invaders_focused = (active != nullptr && active->visible && active->kind == WindowKind::SpaceInvaders);
     bool editor_focused = (active != nullptr && active->visible && active->kind == WindowKind::TextViewer);
 
     int32_t th = 0;
@@ -112,6 +114,11 @@ void Keyboard::on_irq()
         if (tetris_focused)
         {
             TetrisGame::on_arrow(scancode);
+            return;
+        }
+        if (invaders_focused)
+        {
+            SpaceInvadersGame::on_arrow(scancode, cw, ch);
             return;
         }
         if (editor_focused)
@@ -172,6 +179,12 @@ void Keyboard::on_irq()
     if (tetris_focused)
     {
         TetrisGame::on_key(c);
+        return;
+    }
+
+    if (invaders_focused)
+    {
+        SpaceInvadersGame::on_key(c, cw, ch);
         return;
     }
 

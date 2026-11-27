@@ -8,6 +8,7 @@
 #include "games/pong.hpp"
 #include "games/snake.hpp"
 #include "games/tetris.hpp"
+#include "games/space_invaders.hpp"
 
 namespace WindowManager
 {
@@ -519,6 +520,9 @@ namespace WindowManager
             }
             else if (win.kind == WindowKind::Tetris){
                 TetrisGame::draw_content(cx, cy, cw, ch, win.focused);
+            }
+            else if (win.kind == WindowKind::SpaceInvaders){
+                SpaceInvadersGame::draw_content(cx, cy, cw, ch, win.focused);
             }
         }
 
