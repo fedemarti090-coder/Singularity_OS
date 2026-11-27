@@ -48,6 +48,7 @@ OBJS = \
 	$(BUILD_DIR)/_window.o \
 	$(BUILD_DIR)/taskbar.o \
 	$(BUILD_DIR)/text_editor.o \
+	$(BUILD_DIR)/calculator.o
 
 all: $(ISO_PATH)
 
@@ -59,7 +60,7 @@ $(BUILD_DIR)/switch.o: $(SRC_CORE)/switch.asm
 	mkdir -p $(BUILD_DIR)
 	$(AS) $(ASFLAGS) $(SRC_CORE)/switch.asm -o $@
 
-$(BUILD_DIR)/kernel.o: kernel.cpp $(INC_CORE)/vga.hpp $(INC_CORE)/gdt.hpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/keyboard.hpp $(INC_CORE)/mouse.hpp $(INC_CORE)/cursor.hpp $(INC_GFX)/icons.hpp $(INC_GFX)/_window.hpp $(INC_GFX)/taskbar.hpp $(INC_APP)/text_editor.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/serial.hpp $(INC_CORE)/timer.hpp $(INC_CORE)/shell.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/tss.hpp $(INC_CORE)/task.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/bmp.hpp $(INC_CORE)/rtc.hpp
+$(BUILD_DIR)/kernel.o: kernel.cpp $(INC_CORE)/vga.hpp $(INC_CORE)/gdt.hpp $(INC_CORE)/idt.hpp $(INC_CORE)/pic.hpp $(INC_CORE)/keyboard.hpp $(INC_CORE)/mouse.hpp $(INC_CORE)/cursor.hpp $(INC_GFX)/icons.hpp $(INC_GFX)/_window.hpp $(INC_GFX)/taskbar.hpp $(INC_APP)/text_editor.hpp $(INC_APP)/calculator.hpp $(INC_CORE)/multiboot.hpp $(INC_CORE)/pmm.hpp $(INC_CORE)/memory.hpp $(INC_CORE)/heap.hpp $(INC_CORE)/serial.hpp $(INC_CORE)/timer.hpp $(INC_CORE)/shell.hpp $(INC_CORE)/paging.hpp $(INC_CORE)/tss.hpp $(INC_CORE)/task.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/bmp.hpp $(INC_CORE)/rtc.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c kernel.cpp -o $@
 
@@ -143,7 +144,7 @@ $(BUILD_DIR)/bmp.o: $(SRC_CORE)/bmp.cpp $(INC_CORE)/bmp.hpp $(INC_CORE)/initrd.h
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $(SRC_CORE)/bmp.cpp -o $@
 
-$(BUILD_DIR)/_window.o: $(SRC_GFX)/_window.cpp $(INC_GFX)/_window.hpp $(INC_APP)/text_editor.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/initrd.hpp
+$(BUILD_DIR)/_window.o: $(SRC_GFX)/_window.cpp $(INC_GFX)/_window.hpp $(INC_APP)/text_editor.hpp $(INC_APP)/calculator.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/initrd.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $(SRC_GFX)/_window.cpp -o $@
 
@@ -154,6 +155,10 @@ $(BUILD_DIR)/taskbar.o: $(SRC_GFX)/taskbar.cpp $(INC_GFX)/taskbar.hpp $(INC_CORE
 $(BUILD_DIR)/text_editor.o: $(SRC_APP)/text_editor.cpp $(INC_APP)/text_editor.hpp $(INC_CORE)/initrd.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/font.hpp
 	mkdir -p $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $(SRC_APP)/text_editor.cpp -o $@
+
+$(BUILD_DIR)/calculator.o: $(SRC_APP)/calculator.cpp $(INC_APP)/calculator.hpp $(INC_CORE)/framebuffer.hpp $(INC_CORE)/font.hpp
+	mkdir -p $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $(SRC_APP)/calculator.cpp -o $@
 
 $(INITRD_TAR): $(wildcard $(INITRD_DIR)/*)
 	mkdir -p $(BUILD_DIR) $(INITRD_DIR)

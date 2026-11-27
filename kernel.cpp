@@ -30,6 +30,7 @@
 #include "games/tetris.hpp"
 #include "dirty.hpp"
 #include "fps_debugger.hpp"
+#include "calculator.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -228,8 +229,10 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
                              fw->kind == WindowKind::Tetris ||
                              fw->kind == WindowKind::SpaceInvaders));
 
+        bool calc_changed = CalculatorApp::consume_dirty();
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
-        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed;
+        bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed || calc_changed;
         bool time_changed = (now_sec != last_rtc_sec);
 
         uint64_t now_tick = Timer::ticks();

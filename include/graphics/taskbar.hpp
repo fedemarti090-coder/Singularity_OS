@@ -21,7 +21,7 @@ namespace Taskbar
     inline constexpr int32_t MENU_ITEM_H = 26;
     inline constexpr int32_t MENU_W = 168;
     inline constexpr int32_t MENU_PAD = 4;
-    inline constexpr int32_t MENU_ITEMS = 11;
+    inline constexpr int32_t MENU_ITEMS = 12;
 
     inline bool prev_left_down = false;
     inline bool start_open = false;
@@ -173,6 +173,7 @@ namespace Taskbar
                 "Shell",
                 "Files",
                 "About",
+                "Calcolatrice",
                 "--------",
                 "Pong",
                 "Snake",
@@ -182,7 +183,7 @@ namespace Taskbar
             for (int32_t i = 0; i < MENU_ITEMS; ++i)
             {
                 int32_t iy = sy + MENU_PAD + i * MENU_ITEM_H;
-                if (i == 2 || i == 6)
+                if (i == 2 || i == 7)
                 {
                     Font8x16::draw_text(sx + 12, iy + (MENU_ITEM_H - 16) / 2, labels[i], sep_col);
                 }
@@ -253,22 +254,27 @@ namespace Taskbar
                     WindowManager::open_or_focus(WindowKind::About, "About", 180, 130, 300, 160);
                     return true;
                 }
-                if (idx == 7)
+                if (idx == 6)
                 {
-                    WindowManager::open_or_focus(WindowKind::Pong, "Play pong", 180, 130, 750, 500);
+                    WindowManager::open_or_focus(WindowKind::Calculator, "Calculator", 200, 140, 260, 320);
                     return true;
                 }
                 if (idx == 8)
                 {
-                    WindowManager::open_or_focus(WindowKind::Snake, "Play snake", 180, 130, 500, 500);
+                    WindowManager::open_or_focus(WindowKind::Pong, "Play pong", 180, 130, 750, 500);
                     return true;
                 }
                 if (idx == 9)
                 {
-                    WindowManager::open_or_focus(WindowKind::Tetris, "Play tetris", 180, 130, 300, 500);
+                    WindowManager::open_or_focus(WindowKind::Snake, "Play snake", 180, 130, 500, 500);
                     return true;
                 }
                 if (idx == 10)
+                {
+                    WindowManager::open_or_focus(WindowKind::Tetris, "Play tetris", 180, 130, 300, 500);
+                    return true;
+                }
+                if (idx == 11)
                 {
                     WindowManager::open_or_focus(WindowKind::SpaceInvaders, "Play space invaders", 180, 130, 500, 500);
                     return true;

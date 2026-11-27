@@ -10,6 +10,7 @@
 #include "games/tetris.hpp"
 #include "games/space_invaders.hpp"
 #include "fps_debugger.hpp"
+#include "app/calculator.hpp"
 
 namespace WindowManager
 {
@@ -527,6 +528,10 @@ namespace WindowManager
             {
                 SpaceInvadersGame::draw_content(cx, cy, cw, ch, win.focused);
             }
+            else if (win.kind == WindowKind::Calculator)
+            {
+                CalculatorApp::draw_content(cx, cy, cw, ch, win.focused);
+            }
 
             if (win.focused && cw > 0 && ch > 0)
             {
@@ -818,6 +823,14 @@ namespace WindowManager
                 int32_t cw = top.w - 2;
                 int32_t ch = top.h - th - 2;
                 TextEditor::on_mouse_click(mx, my, cx, cy, cw, ch);
+            }
+            else if (top.kind == WindowKind::Calculator)
+            {
+                int32_t cx = top.x + 1;
+                int32_t cy = top.y + th + 1;
+                int32_t cw = top.w - 2;
+                int32_t ch = top.h - th - 2;
+                CalculatorApp::on_mouse_click(mx, my, cx, cy, cw, ch);
             }
             return true;
         }
