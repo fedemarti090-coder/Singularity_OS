@@ -179,7 +179,9 @@ void Framebuffer::fill_rect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t
     }
 
     uint32_t span = static_cast<uint32_t>(x1 - x0);
-    uint8_t *base = reinterpret_cast<uint8_t *>(back_ptr) + static_cast<uint32_t>(y0) * fb_pitch + static_cast<uint32_t>(x0) * 4u;
+    uint8_t *base = reinterpret_cast<uint8_t *>(back_ptr) +
+                    static_cast<uint32_t>(y0) * fb_pitch +
+                    static_cast<uint32_t>(x0) * 4u;
 
     for (int32_t py = y0; py < y1; ++py)
     {
@@ -192,13 +194,15 @@ void Framebuffer::fill_rect(int32_t x, int32_t y, int32_t w, int32_t h, uint32_t
     }
 }
 
-void Framebuffer::swap_buffers() {
-    if (!ready || front_ptr == nullptr || back_ptr == nullptr) {
+void Framebuffer::swap_buffers()
+{
+    if (!ready || front_ptr == nullptr || back_ptr == nullptr)
+    {
         Serial::print_line("[FB] swap_buffers skipped: not ready", Serial::COM1);
         return;
     }
-    const void* src = back_ptr;
-    void* dst = front_ptr;
+    const void *src = back_ptr;
+    void *dst = front_ptr;
     uint32_t dwords = fb_size_bytes / sizeof(uint32_t);
     asm volatile(
         "cld\n\t"
@@ -206,4 +210,50 @@ void Framebuffer::swap_buffers() {
         : "+S"(src), "+D"(dst), "+c"(dwords)
         :
         : "memory");
+}
+
+void Framebuffer::swap_rect(int32_t x, int32_t y, int32_t w, int32_t h)
+{
+    if (!ready || front_ptr == nullptr || back_ptr == nullptr || w <= 0 || h <= 0)
+    {
+        return;
+    }
+
+    int32_t x0 = x < 0 ? 0 : x;
+    int32_t y0 = y < 0 ? 0 : y;
+    int32_t x1 = x + w;
+    int32_t y1 = y + h;
+
+    if (x1 > static_cast<int32_t>(fb_width))
+    {
+        x1 = static_cast<int32_t>(fb_width);
+    }
+    if (y1 > static_cast<int32_t>(fb_height))
+    {
+        y1 = static_cast<int32_t>(fb_height);
+    }
+    if (x0 >= x1 || y0 >= y1)
+    {
+        return;
+    }
+
+    uint32_t row_dwords = static_cast<uint32_t>(x1 - x0);
+    uint32_t byte_offset = static_cast<uint32_t>(y0) * fb_pitch + static_cast<uint32_t>(x0) * 4u;
+    const uint8_t *src_row = reinterpret_cast<const uint8_t *>(back_ptr) + byte_offset;
+    uint8_t *dst_row = reinterpret_cast<uint8_t *>(front_ptr) + byte_offset;
+
+    for (int32_t py = y0; py < y1; ++py)
+    {
+        const void *s = src_row;
+        void *d = dst_row;
+        uint32_t count = row_dwords;
+        asm volatile(
+            "cld\n\t"
+            "rep movsl"
+            : "+S"(s), "+D"(d), "+c"(count)
+            :
+            : "memory");
+        src_row += fb_pitch;
+        dst_row += fb_pitch;
+    }
 }

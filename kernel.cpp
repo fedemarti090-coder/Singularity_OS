@@ -28,6 +28,7 @@
 #include "games/pong.hpp"
 #include "games/snake.hpp"
 #include "games/tetris.hpp"
+#include "dirty.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -196,9 +197,14 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
     uint64_t last_render_tick = 0;
     constexpr uint64_t RENDER_STEP_TICKS = 2;
 
+    int32_t prev_cursor_x = Mouse::state().x;
+    int32_t prev_cursor_y = Mouse::state().y;
+    bool prev_start_open = Taskbar::is_start_open();
+    DirtyTracker::request_full();
+
     while (true)
     {
-        const auto &m = Mouse::state();
+        const auto m = Mouse::state();
         bool left_down = m.left_button;
 
         bool tb_changed = Taskbar::on_mouse(m.x, m.y, left_down);
@@ -215,13 +221,11 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
         bool text_editor_changed = TextEditor::consume_dirty();
 
         Window *fw = WindowManager::focused_window();
-        bool pong_active = (fw != nullptr && fw->visible && fw->kind == WindowKind::Pong);
-
-        bool snake_focused = (fw != nullptr && fw->visible && fw->kind == WindowKind::Snake);
-
-        bool tetris_focused = (fw != nullptr && fw->visible && fw->kind == WindowKind::Tetris);
-
-        bool invaders_focused = (fw != nullptr && fw->visible && fw->kind == WindowKind::SpaceInvaders);
+        bool game_active = (fw != nullptr && fw->visible &&
+                            (fw->kind == WindowKind::Pong ||
+                             fw->kind == WindowKind::Snake ||
+                             fw->kind == WindowKind::Tetris ||
+                             fw->kind == WindowKind::SpaceInvaders));
 
         uint8_t now_sec = Rtc::read_time(1).seconds;
         bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed;
@@ -230,12 +234,53 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
         uint64_t now_tick = Timer::ticks();
         bool tick_ready = (now_tick - last_render_tick) >= RENDER_STEP_TICKS;
 
-        if (fb_ok && tick_ready && (ui_changed || time_changed || pong_active || snake_focused || tetris_focused || invaders_focused))
+        if (fb_ok && tick_ready && (ui_changed || time_changed || game_active))
         {
+            bool cur_start_open = Taskbar::is_start_open();
+            if (tb_changed || win_changed || cur_start_open != prev_start_open ||
+                shell_changed || blink_changed || text_editor_changed)
+            {
+                DirtyTracker::request_full();
+            }
+            else
+            {
+                if (m.dirty)
+                {
+                    DirtyTracker::add(prev_cursor_x, prev_cursor_y, 12, 16);
+                    DirtyTracker::add(m.x, m.y, 12, 16);
+                }
+                if (time_changed)
+                {
+                    int32_t fb_w = static_cast<int32_t>(Framebuffer::width());
+                    int32_t bar_y = static_cast<int32_t>(Framebuffer::height()) - Taskbar::BAR_H;
+                    DirtyTracker::add(fb_w - 90, bar_y + 4, 84, 28);
+                }
+                if (game_active && fw != nullptr)
+                {
+                    int32_t th = (fw->h < WindowManager::TITLE_H) ? fw->h : WindowManager::TITLE_H;
+                    DirtyTracker::add(fw->x + 1, fw->y + th + 1, fw->w - 2, fw->h - th - 2);
+                }
+            }
+
             last_render_tick = now_tick;
             last_rtc_sec = now_sec;
             last_blink_phase = blink_phase;
-            render_frame(fb_ok);
+            prev_start_open = cur_start_open;
+
+            Framebuffer::clear(Framebuffer::rgb(0, 0, 0));
+            if (Wallpaper::is_loaded())
+            {
+                Wallpaper::draw_to_backbuffer();
+            }
+            Font8x16::draw_text(24, 24, "Singularity OS", Framebuffer::rgb(255, 255, 255));
+            WindowManager::draw_all();
+            Taskbar::draw();
+            Cursor::draw(m.x, m.y);
+
+            DirtyTracker::flush_swap();
+            prev_cursor_x = m.x;
+            prev_cursor_y = m.y;
+            Mouse::clear_dirty();
         }
         asm volatile("hlt");
     }

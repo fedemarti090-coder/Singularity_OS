@@ -69,4 +69,4 @@ Giochi
 
 Performance
 [X] Adattamento framebuffer per render piu complessi
-[ ] Dirty rectangles
+[X] Dirty rectangles
