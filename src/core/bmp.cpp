@@ -5,8 +5,8 @@
 #include "serial.hpp"
 
 namespace {
-    constexpr uint32_t MAX_WALLPAPER_W = 1024;
-    constexpr uint32_t MAX_WALLPAPER_H = 768;
+    constexpr uint32_t MAX_WALLPAPER_W = 1600;
+    constexpr uint32_t MAX_WALLPAPER_H = 900;
     constexpr size_t MAX_WALLPAPER_PIXELS = static_cast<size_t>(MAX_WALLPAPER_W) * MAX_WALLPAPER_H;
 
     alignas(16) uint32_t g_decoded_buf[MAX_WALLPAPER_PIXELS] = {0};

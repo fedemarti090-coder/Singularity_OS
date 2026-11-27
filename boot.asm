@@ -16,8 +16,8 @@ align 4
 
     ; Campi video (offset 32)
     dd 0    ; mode_type: 0 = modalità grafica lineare
-    dd 1024 ; width
-    dd 768  ; height
+    dd 1600 ; width
+    dd 900  ; height
     dd 32   ; depth (bpp)
 
 section .bss

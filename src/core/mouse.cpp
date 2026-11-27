@@ -83,8 +83,8 @@ namespace {
 
         if (g_state.x < 0) g_state.x = 0;
         if (g_state.y < 0) g_state.y = 0;
-        if (g_state.x > 1023) g_state.x = 1023;
-        if (g_state.y > 767) g_state.y = 767;
+        if (g_state.x > 1599) g_state.x = 1599;
+        if (g_state.y > 899) g_state.y = 899;
 
         g_state.dirty = true;
     }

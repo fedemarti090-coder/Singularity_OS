@@ -1,7 +1,14 @@
-import argparse
 import struct
 from pathlib import Path
 from PIL import Image
+
+# --- CONFIGURAZIONE DA VARIABILI ---
+INPUT_PATH: str | None = "image-2.png"  # Percorso immagine sorgente (oppure None per gradiente)
+OUTPUT_PATH: str = "wallpaper.bmp"    # Percorso file BMP di output
+TARGET_WIDTH: int = 1600              # Larghezza desiderata in output (px)
+TARGET_HEIGHT: int = 900              # Altezza in output (None = proporzionale all'originale)
+TOP_DOWN: bool = False                # True per BMP top-down (biHeight negativo)
+# -----------------------------------
 
 
 def build_bmp_24bit(width: int, height: int, rgb_bytes: bytes, top_down: bool = False) -> bytes:
@@ -74,24 +81,25 @@ def generate_gradient(width: int, height: int) -> bytes:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Generate uncompressed 24-bit BMP wallpaper")
-    parser.add_argument("-i", "--input", type=str, default=None, help="Source image (optional)")
-    parser.add_argument("-o", "--output", type=str, default="wallpaper.bmp", help="Output BMP path")
-    parser.add_argument("-W", "--width", type=int, default=1024, help="Target width")
-    parser.add_argument("-H", "--height", type=int, default=768, help="Target height")
-    parser.add_argument("--top-down", action="store_true", help="Write negative biHeight top-down BMP")
-    args = parser.parse_args()
+    width = TARGET_WIDTH
 
-    if args.input:
-        img = Image.open(args.input).convert("RGB").resize((args.width, args.height), Image.Resampling.LANCZOS)
+    if INPUT_PATH:
+        img = Image.open(INPUT_PATH).convert("RGB")
+        if TARGET_HEIGHT is not None:
+            height = TARGET_HEIGHT
+        else:
+            height = max(1, round(img.height * (width / img.width)))
+
+        img = img.resize((width, height), Image.Resampling.LANCZOS)
         rgb_bytes = img.tobytes()
     else:
-        rgb_bytes = generate_gradient(args.width, args.height)
+        height = TARGET_HEIGHT if TARGET_HEIGHT is not None else 768
+        rgb_bytes = generate_gradient(width, height)
 
-    bmp_bytes = build_bmp_24bit(args.width, args.height, rgb_bytes, top_down=args.top_down)
-    out_path = Path(args.output)
+    bmp_bytes = build_bmp_24bit(width, height, rgb_bytes, top_down=TOP_DOWN)
+    out_path = Path(OUTPUT_PATH)
     out_path.write_bytes(bmp_bytes)
-    print(f"Wrote {out_path} ({len(bmp_bytes)} bytes, {args.width}x{args.height}x24)")
+    print(f"Wrote {out_path} ({len(bmp_bytes)} bytes, {width}x{height}x24)")
 
 
 if __name__ == "__main__":
