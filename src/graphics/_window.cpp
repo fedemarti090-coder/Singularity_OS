@@ -7,6 +7,7 @@
 #include "app/text_editor.hpp"
 #include "games/pong.hpp"
 #include "games/snake.hpp"
+#include "games/tetris.hpp"
 
 namespace WindowManager
 {
@@ -515,6 +516,9 @@ namespace WindowManager
             else if (win.kind == WindowKind::Snake)
             {
                 SnakeGame::draw_content(cx, cy, cw, ch, win.focused);
+            }
+            else if (win.kind == WindowKind::Tetris){
+                TetrisGame::draw_content(cx, cy, cw, ch, win.focused);
             }
         }
 

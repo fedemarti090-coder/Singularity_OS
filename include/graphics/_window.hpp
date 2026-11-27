@@ -11,7 +11,8 @@ enum class WindowKind : uint8_t
     TextViewer = 4,
     ImageViewer = 5,
     Pong = 6,
-    Snake = 7
+    Snake = 7,
+    Tetris = 8
 };
 
 // main struct di una finestra software

@@ -7,6 +7,7 @@
 #include "text_editor.hpp"
 #include "pong.hpp"
 #include "snake.hpp"
+#include "tetris.hpp"
 
 extern "C"
 {
@@ -71,6 +72,7 @@ void Keyboard::on_irq()
     Window *active = WindowManager::focused_window();
     bool pong_focused = (active != nullptr && active->visible && active->kind == WindowKind::Pong);
     bool snake_focused = (active != nullptr && active->visible && active->kind == WindowKind::Snake);
+    bool tetris_focused = (active != nullptr && active->visible && active->kind == WindowKind::Tetris);
     bool editor_focused = (active != nullptr && active->visible && active->kind == WindowKind::TextViewer);
 
     int32_t th = 0;
@@ -105,6 +107,11 @@ void Keyboard::on_irq()
         if (snake_focused)
         {
             SnakeGame::on_arrow(scancode, cw, ch);
+            return;
+        }
+        if (tetris_focused)
+        {
+            TetrisGame::on_arrow(scancode);
             return;
         }
         if (editor_focused)
@@ -159,6 +166,12 @@ void Keyboard::on_irq()
     if (snake_focused)
     {
         SnakeGame::on_key(c, cw, ch);
+        return;
+    }
+
+    if (tetris_focused)
+    {
+        TetrisGame::on_key(c);
         return;
     }
 

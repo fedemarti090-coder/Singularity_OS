@@ -24,9 +24,10 @@
 #include "taskbar.hpp"
 #include "rtc.hpp"
 #include "_window.hpp"
-#include "text_editor.hpp"
-#include "pong.hpp"
-#include "snake.hpp"
+#include "app/text_editor.hpp"
+#include "games/pong.hpp"
+#include "games/snake.hpp"
+#include "games/tetris.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -218,6 +219,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
 
         bool snake_focused = (fw != nullptr && fw->visible && fw->kind == WindowKind::Snake);
 
+        bool tetris_focused = (fw != nullptr && fw->visible && fw->kind == WindowKind::Tetris);
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
         bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed;
         bool time_changed = (now_sec != last_rtc_sec);
@@ -225,7 +228,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
         uint64_t now_tick = Timer::ticks();
         bool tick_ready = (now_tick - last_render_tick) >= RENDER_STEP_TICKS;
 
-        if (fb_ok && tick_ready && (ui_changed || time_changed || pong_active || snake_focused))
+        if (fb_ok && tick_ready && (ui_changed || time_changed || pong_active || snake_focused || tetris_focused))
         {
             last_render_tick = now_tick;
             last_rtc_sec = now_sec;

@@ -59,7 +59,7 @@ Resize e gestibilita
 Giochi
 [X] Ping
 [X] Snake
-[ ] Tetris
+[X] Tetris
 [ ] Space Invaders
 
 Performance

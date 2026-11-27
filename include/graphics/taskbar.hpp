@@ -21,7 +21,7 @@ namespace Taskbar
     inline constexpr int32_t MENU_ITEM_H = 26;
     inline constexpr int32_t MENU_W = 168;
     inline constexpr int32_t MENU_PAD = 4;
-    inline constexpr int32_t MENU_ITEMS = 9;
+    inline constexpr int32_t MENU_ITEMS = 10;
 
     inline bool prev_left_down = false;
     inline bool start_open = false;
@@ -175,7 +175,8 @@ namespace Taskbar
                 "About",
                 "--------",
                 "Pong",
-                "Snake"};
+                "Snake",
+                "Tetris"};
 
             for (int32_t i = 0; i < MENU_ITEMS; ++i)
             {
@@ -259,6 +260,11 @@ namespace Taskbar
                 if (idx == 8)
                 {
                     WindowManager::open_or_focus(WindowKind::Snake, "Play snake", 180, 130, 500, 500);
+                    return true;
+                }
+                if (idx == 9)
+                {
+                    WindowManager::open_or_focus(WindowKind::Tetris, "Play tetris", 180, 130, 300, 500);
                     return true;
                 }
                 return true;
