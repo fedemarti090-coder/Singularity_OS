@@ -78,6 +78,20 @@ void Keyboard::on_irq()
         {
             return;
         }
+        if (pong_focused)
+        {
+            int32_t th = (active->h < WindowManager::TITLE_H) ? active->h : WindowManager::TITLE_H;
+            int32_t ch = active->h - th - 2;
+            if (scancode == 0x48)
+            {
+                PongGame::on_key('w', ch);
+            }
+            else if (scancode == 0x50)
+            {
+                PongGame::on_key('s', ch);
+            }
+            return;
+        }
         if (editor_focused)
         {
             switch (scancode)

@@ -133,7 +133,6 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
 
         WindowManager::init();
 
-
         if (initrd_ok)
         {
             for (size_t i = 0; i < InitRd::count(); ++i)
@@ -191,6 +190,9 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
 
     uint8_t last_rtc_sec = 0xFF;
     uint32_t last_blink_phase = 0xFFFFFFFFu;
+    uint64_t last_render_tick = 0;
+    constexpr uint64_t RENDER_STEP_TICKS = 2;
+
     while (true)
     {
         const auto &m = Mouse::state();
@@ -209,12 +211,19 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
 
         bool text_editor_changed = TextEditor::consume_dirty();
 
+        Window *fw = WindowManager::focused_window();
+        bool pong_active = (fw != nullptr && fw->visible && fw->kind == WindowKind::Pong);
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
         bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed;
         bool time_changed = (now_sec != last_rtc_sec);
 
-        if (fb_ok && (ui_changed || time_changed))
+        uint64_t now_tick = Timer::ticks();
+        bool tick_ready = (now_tick - last_render_tick) >= RENDER_STEP_TICKS;
+
+        if (fb_ok && tick_ready && (ui_changed || time_changed || pong_active))
         {
+            last_render_tick = now_tick;
             last_rtc_sec = now_sec;
             last_blink_phase = blink_phase;
             render_frame(fb_ok);

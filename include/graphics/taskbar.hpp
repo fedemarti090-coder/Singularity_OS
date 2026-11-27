@@ -179,7 +179,7 @@ namespace Taskbar
             for (int32_t i = 0; i < MENU_ITEMS; ++i)
             {
                 int32_t iy = sy + MENU_PAD + i * MENU_ITEM_H;
-                if (i == 2)
+                if (i == 2 || i == 6)
                 {
                     Font8x16::draw_text(sx + 12, iy + (MENU_ITEM_H - 16) / 2, labels[i], sep_col);
                 }
@@ -250,7 +250,7 @@ namespace Taskbar
                     WindowManager::open_or_focus(WindowKind::About, "About", 180, 130, 300, 160);
                     return true;
                 }
-                if (idx == 6)
+                if (idx == 7)
                 {
                     WindowManager::open_or_focus(WindowKind::Pong, "Play pong", 180, 130, 600, 500);
                     return true;

@@ -12,7 +12,7 @@ namespace PongGame
     inline constexpr int32_t MARGIN = 12;
 
     inline bool initialized = false;
-    inline bool paused = false;
+    inline bool manual_paused = false;
     inline uint64_t last_tick = 0;
 
     inline int32_t left_y = 60;
@@ -47,13 +47,28 @@ namespace PongGame
         score_right = 0;
         left_y = (ch - PADDLE_H) / 2;
         right_y = (ch - PADDLE_H) / 2;
-        paused = false;
+        manual_paused = false;
         reset_ball(cw, ch, 1);
         initialized = true;
     }
 
     inline void on_key(char c, int32_t ch)
     {
+        if (c == 27 || c == ' ') // ESC o Spazio
+        {
+            manual_paused = !manual_paused;
+            return;
+        }
+
+        if (manual_paused)
+        {
+            if (c == 'r' || c == 'R')
+            {
+                initialized = false;
+            }
+            return;
+        }
+
         if (c == 'w' || c == 'W')
         {
             left_y = clamp_i32(left_y - 16, 4, ch - PADDLE_H - 4);
@@ -61,10 +76,6 @@ namespace PongGame
         else if (c == 's' || c == 'S')
         {
             left_y = clamp_i32(left_y + 16, 4, ch - PADDLE_H - 4);
-        }
-        else if (c == ' ')
-        {
-            paused = !paused;
         }
         else if (c == 'r' || c == 'R')
         {
@@ -82,13 +93,13 @@ namespace PongGame
         }
 
         uint64_t now = Timer::ticks();
-        if (now - last_tick < 2u) // ~50 step/sec se PIT = 100 Hz
+        if (now - last_tick < 2u)
         {
             return;
         }
         last_tick = now;
 
-        if (paused || !focused)
+        if (manual_paused || !focused)
         {
             return;
         }
@@ -98,7 +109,7 @@ namespace PongGame
 
         int32_t ai_center = right_y + PADDLE_H / 2;
         int32_t ball_center = ball_y + BALL_SIZE / 2;
-        constexpr int32_t ai_step = 12;
+        constexpr int32_t ai_step = 11;
         if (ai_center < ball_center - 5)
         {
             right_y += ai_step;
@@ -191,6 +202,8 @@ namespace PongGame
         const uint32_t text_col = Framebuffer::rgb(245, 247, 250);
         const uint32_t dim_col = Framebuffer::rgb(140, 148, 162);
         const uint32_t line_col = Framebuffer::rgb(46, 52, 64);
+        const uint32_t box_bg = Framebuffer::rgb(14, 16, 22);
+        const uint32_t box_border = Framebuffer::rgb(138, 237, 128);
 
         if (cw < 160 || ch < 90)
         {
@@ -213,13 +226,27 @@ namespace PongGame
         Framebuffer::fill_rect(cx + cw - MARGIN - PADDLE_W, cy + right_y, PADDLE_W, PADDLE_H, text_col);
         Framebuffer::fill_rect(cx + ball_x, cy + ball_y, BALL_SIZE, BALL_SIZE, acc_col);
 
-        if (paused)
+        bool show_pause = manual_paused || !focused;
+        if (show_pause)
         {
-            Font8x16::draw_text(mid_x - 24, cy + ch / 2 - 8, "PAUSA", acc_col);
-        }
-        else if (!focused)
-        {
-            Font8x16::draw_text(cx + 8, cy + ch - 20, "Click per giocare (W/S)", dim_col);
+            const char *title = "PAUSA";
+            const char *hint = manual_paused ? "ESC: riprendi | R: reset" : "Click per riprendere";
+
+            int32_t title_w = 5 * 8;
+            int32_t hint_w = (manual_paused ? 24 : 19) * 8;
+            int32_t box_w = ((title_w > hint_w) ? title_w : hint_w) + 28;
+            int32_t box_h = 52;
+            int32_t bx = cx + (cw - box_w) / 2;
+            int32_t by = cy + (ch - box_h) / 2;
+
+            Framebuffer::fill_rect(bx, by, box_w, box_h, box_bg);
+            Framebuffer::fill_rect(bx, by, box_w, 2, box_border);
+            Framebuffer::fill_rect(bx, by + box_h - 2, box_w, 2, box_border);
+            Framebuffer::fill_rect(bx, by, 2, box_h, box_border);
+            Framebuffer::fill_rect(bx + box_w - 2, by, 2, box_h, box_border);
+
+            Font8x16::draw_text(cx + (cw - title_w) / 2, by + 10, title, acc_col);
+            Font8x16::draw_text(cx + (cw - hint_w) / 2, by + 30, hint, dim_col);
         }
     }
 }
