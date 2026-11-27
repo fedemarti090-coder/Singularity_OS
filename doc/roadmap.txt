@@ -70,3 +70,4 @@ Giochi
 Performance
 [X] Adattamento framebuffer per render piu complessi
 [X] Dirty rectangles
+[X] Visualizzatore di FPS sulle finestre ( attivabile )

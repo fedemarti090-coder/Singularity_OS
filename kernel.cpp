@@ -29,6 +29,7 @@
 #include "games/snake.hpp"
 #include "games/tetris.hpp"
 #include "dirty.hpp"
+#include "fps_debugger.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -278,6 +279,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
             Cursor::draw(m.x, m.y);
 
             DirtyTracker::flush_swap();
+            FpsDebug::on_frame_presented();
             prev_cursor_x = m.x;
             prev_cursor_y = m.y;
             Mouse::clear_dirty();

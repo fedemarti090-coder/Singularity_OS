@@ -9,6 +9,7 @@
 #include "games/snake.hpp"
 #include "games/tetris.hpp"
 #include "games/space_invaders.hpp"
+#include "fps_debugger.hpp"
 
 namespace WindowManager
 {
@@ -518,11 +519,18 @@ namespace WindowManager
             {
                 SnakeGame::draw_content(cx, cy, cw, ch, win.focused);
             }
-            else if (win.kind == WindowKind::Tetris){
+            else if (win.kind == WindowKind::Tetris)
+            {
                 TetrisGame::draw_content(cx, cy, cw, ch, win.focused);
             }
-            else if (win.kind == WindowKind::SpaceInvaders){
+            else if (win.kind == WindowKind::SpaceInvaders)
+            {
                 SpaceInvadersGame::draw_content(cx, cy, cw, ch, win.focused);
+            }
+
+            if (win.focused && cw > 0 && ch > 0)
+            {
+                FpsDebug::draw_in_rect(cx, cy, cw, ch);
             }
         }
 

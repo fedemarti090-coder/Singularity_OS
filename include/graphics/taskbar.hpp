@@ -255,7 +255,7 @@ namespace Taskbar
                 }
                 if (idx == 7)
                 {
-                    WindowManager::open_or_focus(WindowKind::Pong, "Play pong", 180, 130, 600, 500);
+                    WindowManager::open_or_focus(WindowKind::Pong, "Play pong", 180, 130, 750, 500);
                     return true;
                 }
                 if (idx == 8)
