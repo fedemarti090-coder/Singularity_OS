@@ -57,5 +57,12 @@ Resize e gestibilita
 [X] Aumento di risoluzione della finestra dell EMU dell'OS
 
 Giochi
-[ ] Ping
-[ ] Snake
+[X] Ping
+[X] Snake
+[ ] Tetris
+[ ] Space Invaders
+
+Performance
+[ ] Adattamento framebuffer per render piu complessi
+[ ] Dirty rectangles
+[ ]

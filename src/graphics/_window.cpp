@@ -6,6 +6,7 @@
 #include "initrd.hpp"
 #include "app/text_editor.hpp"
 #include "games/pong.hpp"
+#include "games/snake.hpp"
 
 namespace WindowManager
 {
@@ -510,6 +511,10 @@ namespace WindowManager
             else if (win.kind == WindowKind::Pong)
             {
                 PongGame::draw_content(cx, cy, cw, ch, win.focused);
+            }
+            else if (win.kind == WindowKind::Snake)
+            {
+                SnakeGame::draw_content(cx, cy, cw, ch, win.focused);
             }
         }
 

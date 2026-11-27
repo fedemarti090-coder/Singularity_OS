@@ -6,6 +6,7 @@
 #include "_window.hpp"
 #include "text_editor.hpp"
 #include "pong.hpp"
+#include "snake.hpp"
 
 extern "C"
 {
@@ -69,7 +70,18 @@ void Keyboard::on_irq()
 
     Window *active = WindowManager::focused_window();
     bool pong_focused = (active != nullptr && active->visible && active->kind == WindowKind::Pong);
+    bool snake_focused = (active != nullptr && active->visible && active->kind == WindowKind::Snake);
     bool editor_focused = (active != nullptr && active->visible && active->kind == WindowKind::TextViewer);
+
+    int32_t th = 0;
+    int32_t cw = 0;
+    int32_t ch = 0;
+    if (active != nullptr)
+    {
+        th = (active->h < WindowManager::TITLE_H) ? active->h : WindowManager::TITLE_H;
+        cw = (active->w > 2) ? (active->w - 2) : 0;
+        ch = (active->h - th - 2 > 0) ? (active->h - th - 2) : 0;
+    }
 
     if (extended)
     {
@@ -80,8 +92,6 @@ void Keyboard::on_irq()
         }
         if (pong_focused)
         {
-            int32_t th = (active->h < WindowManager::TITLE_H) ? active->h : WindowManager::TITLE_H;
-            int32_t ch = active->h - th - 2;
             if (scancode == 0x48)
             {
                 PongGame::on_key('w', ch);
@@ -90,6 +100,11 @@ void Keyboard::on_irq()
             {
                 PongGame::on_key('s', ch);
             }
+            return;
+        }
+        if (snake_focused)
+        {
+            SnakeGame::on_arrow(scancode, cw, ch);
             return;
         }
         if (editor_focused)
@@ -137,9 +152,13 @@ void Keyboard::on_irq()
 
     if (pong_focused)
     {
-        int32_t th = (active->h < WindowManager::TITLE_H) ? active->h : WindowManager::TITLE_H;
-        int32_t ch = active->h - th - 2;
         PongGame::on_key(c, ch);
+        return;
+    }
+
+    if (snake_focused)
+    {
+        SnakeGame::on_key(c, cw, ch);
         return;
     }
 

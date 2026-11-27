@@ -25,6 +25,8 @@
 #include "rtc.hpp"
 #include "_window.hpp"
 #include "text_editor.hpp"
+#include "pong.hpp"
+#include "snake.hpp"
 
 extern "C" uint8_t kernel_start[];
 extern "C" uint8_t kernel_end[];
@@ -214,6 +216,8 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
         Window *fw = WindowManager::focused_window();
         bool pong_active = (fw != nullptr && fw->visible && fw->kind == WindowKind::Pong);
 
+        bool snake_focused = (fw != nullptr && fw->visible && fw->kind == WindowKind::Snake);
+
         uint8_t now_sec = Rtc::read_time(1).seconds;
         bool ui_changed = m.dirty || tb_changed || win_changed || shell_changed || blink_changed || text_editor_changed;
         bool time_changed = (now_sec != last_rtc_sec);
@@ -221,7 +225,7 @@ extern "C" void kernel_main(uint32_t magic, const MultibootInfo *mb_info)
         uint64_t now_tick = Timer::ticks();
         bool tick_ready = (now_tick - last_render_tick) >= RENDER_STEP_TICKS;
 
-        if (fb_ok && tick_ready && (ui_changed || time_changed || pong_active))
+        if (fb_ok && tick_ready && (ui_changed || time_changed || pong_active || snake_focused))
         {
             last_render_tick = now_tick;
             last_rtc_sec = now_sec;
