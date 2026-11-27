@@ -58,7 +58,7 @@ App
 [X] Editor di Testo
 [!] Visualizzatore di immagini
 [ ] Task manager per visualizzare prestazioni
-[ ] Calcolatrice
+[X] Calcolatrice
 [ ] Color picker
 
 Giochi
