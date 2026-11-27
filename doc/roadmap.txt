@@ -55,7 +55,6 @@ Mini Window Manager & App Base
 Resize e gestibilita
 [X] Gestione resize della finestra di sistema
 [X] Aumento di risoluzione della finestra dell EMU dell'OS
-[ ] Gestione reesize dei testi interni etc ( in base alla finestra)
 
 Giochi
 [ ] Ping

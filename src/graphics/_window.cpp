@@ -4,7 +4,8 @@
 #include "shell.hpp"
 #include "timer.hpp"
 #include "initrd.hpp"
-#include "text_editor.hpp"
+#include "app/text_editor.hpp"
+#include "games/pong.hpp"
 
 namespace WindowManager
 {
@@ -505,6 +506,10 @@ namespace WindowManager
                 {
                     draw_text_clipped(cx + 10, cy + 32, "Freestanding x86 GUI", cw - 20, dim_col);
                 }
+            }
+            else if (win.kind == WindowKind::Pong)
+            {
+                PongGame::draw_content(cx, cy, cw, ch, win.focused);
             }
         }
 

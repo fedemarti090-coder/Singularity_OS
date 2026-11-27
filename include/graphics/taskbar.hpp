@@ -21,7 +21,7 @@ namespace Taskbar
     inline constexpr int32_t MENU_ITEM_H = 26;
     inline constexpr int32_t MENU_W = 168;
     inline constexpr int32_t MENU_PAD = 4;
-    inline constexpr int32_t MENU_ITEMS = 6;
+    inline constexpr int32_t MENU_ITEMS = 8;
 
     inline bool prev_left_down = false;
     inline bool start_open = false;
@@ -172,7 +172,9 @@ namespace Taskbar
                 "--------",
                 "Shell",
                 "Files",
-                "About"};
+                "About",
+                "--------",
+                "Pong"};
 
             for (int32_t i = 0; i < MENU_ITEMS; ++i)
             {
@@ -246,6 +248,11 @@ namespace Taskbar
                 if (idx == 5)
                 {
                     WindowManager::open_or_focus(WindowKind::About, "About", 180, 130, 300, 160);
+                    return true;
+                }
+                if (idx == 6)
+                {
+                    WindowManager::open_or_focus(WindowKind::Pong, "Play pong", 180, 130, 600, 500);
                     return true;
                 }
                 return true;
