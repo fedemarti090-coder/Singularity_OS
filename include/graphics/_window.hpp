@@ -27,6 +27,14 @@ struct Window
     bool dragging;
     int32_t drag_offset_x;
     int32_t drag_offset_y;
+    bool resizing;
+    uint8_t resize_edge;
+    int32_t resize_start_x;
+    int32_t resize_start_y;
+    int32_t resize_start_w;
+    int32_t resize_start_h;
+    int32_t resize_mouse_x;
+    int32_t resize_mouse_y;
     int32_t selected_file;
     bool maximized;
     int32_t restore_x;

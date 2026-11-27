@@ -18,6 +18,16 @@ namespace WindowManager
         constexpr int32_t BTN_MARGIN = 4;
         constexpr int32_t BTN_GAP = 4;
         constexpr int32_t TASKBAR_RESERVE_H = 36;
+        constexpr int32_t RESIZE_GRAB = 5;
+        constexpr int32_t MIN_WIN_W = 140;
+        constexpr int32_t MIN_WIN_H = 72;
+
+        constexpr uint8_t RESIZE_NONE = 0;
+        constexpr uint8_t RESIZE_LEFT = 1u << 0;
+        constexpr uint8_t RESIZE_RIGHT = 1u << 1;
+        constexpr uint8_t RESIZE_TOP = 1u << 2;
+        constexpr uint8_t RESIZE_BOTTOM = 1u << 3;
+
         bool prev_left_down = false;
 
         size_t cstr_len(const char *s)
@@ -45,6 +55,28 @@ namespace WindowManager
                 }
             }
             dst[i] = '\0';
+        }
+
+        void draw_text_clipped(int32_t x, int32_t y, const char *s, int32_t max_px, uint32_t col)
+        {
+            if (s == nullptr || max_px < 8)
+            {
+                return;
+            }
+            char buf[128];
+            size_t max_chars = static_cast<size_t>(max_px / 8);
+            if (max_chars >= sizeof(buf))
+            {
+                max_chars = sizeof(buf) - 1;
+            }
+            size_t i = 0;
+            while (i < max_chars && s[i] != '\0')
+            {
+                buf[i] = s[i];
+                ++i;
+            }
+            buf[i] = '\0';
+            Font8x16::draw_text(x, y, buf, col);
         }
 
         int32_t titlebar_height(const Window &win)
@@ -89,6 +121,124 @@ namespace WindowManager
             return px >= rx && px < (rx + rw) && py >= ry && py < (ry + rh);
         }
 
+        uint8_t hit_test_resize_edge(const Window &win, int32_t mx, int32_t my)
+        {
+            if (win.maximized || win.w <= 0 || win.h <= 0)
+            {
+                return RESIZE_NONE;
+            }
+            if (!point_in_rect(mx, my, win.x, win.y, win.w, win.h))
+            {
+                return RESIZE_NONE;
+            }
+
+            uint8_t edge = RESIZE_NONE;
+            if (mx < win.x + RESIZE_GRAB)
+            {
+                edge |= RESIZE_LEFT;
+            }
+            else if (mx >= win.x + win.w - RESIZE_GRAB)
+            {
+                edge |= RESIZE_RIGHT;
+            }
+
+            if (my < win.y + RESIZE_GRAB)
+            {
+                edge |= RESIZE_TOP;
+            }
+            else if (my >= win.y + win.h - RESIZE_GRAB)
+            {
+                edge |= RESIZE_BOTTOM;
+            }
+
+            return edge;
+        }
+
+        void apply_resize(Window &win, int32_t mx, int32_t my)
+        {
+            int32_t dx = mx - win.resize_mouse_x;
+            int32_t dy = my - win.resize_mouse_y;
+
+            int32_t new_x = win.resize_start_x;
+            int32_t new_y = win.resize_start_y;
+            int32_t new_w = win.resize_start_w;
+            int32_t new_h = win.resize_start_h;
+
+            int32_t screen_w = static_cast<int32_t>(Framebuffer::width());
+            int32_t screen_h = static_cast<int32_t>(Framebuffer::height());
+            if (screen_w <= 0)
+                screen_w = 1024;
+            if (screen_h <= 0)
+                screen_h = 768;
+
+            int32_t max_bottom = screen_h - TASKBAR_RESERVE_H;
+            if (max_bottom < MIN_WIN_H)
+            {
+                max_bottom = screen_h;
+            }
+
+            if (win.resize_edge & RESIZE_RIGHT)
+            {
+                new_w = win.resize_start_w + dx;
+                if (new_w < MIN_WIN_W)
+                {
+                    new_w = MIN_WIN_W;
+                }
+                if (new_x + new_w > screen_w)
+                {
+                    new_w = screen_w - new_x;
+                }
+            }
+
+            if (win.resize_edge & RESIZE_LEFT)
+            {
+                int32_t right = win.resize_start_x + win.resize_start_w;
+                new_x = win.resize_start_x + dx;
+                if (new_x < 0)
+                {
+                    new_x = 0;
+                }
+                if (right - new_x < MIN_WIN_W)
+                {
+                    new_x = right - MIN_WIN_W;
+                }
+                new_w = right - new_x;
+            }
+
+            if (win.resize_edge & RESIZE_BOTTOM)
+            {
+                new_h = win.resize_start_h + dy;
+                if (new_h < MIN_WIN_H)
+                {
+                    new_h = MIN_WIN_H;
+                }
+                if (new_y + new_h > max_bottom)
+                {
+                    new_h = max_bottom - new_y;
+                }
+            }
+
+            if (win.resize_edge & RESIZE_TOP)
+            {
+                int32_t bottom = win.resize_start_y + win.resize_start_h;
+                new_y = win.resize_start_y + dy;
+                if (new_y < 0)
+                {
+                    new_y = 0;
+                }
+                if (bottom - new_y < MIN_WIN_H)
+                {
+                    new_y = bottom - MIN_WIN_H;
+                }
+                new_h = bottom - new_y;
+            }
+
+            win.x = new_x;
+            win.y = new_y;
+            win.w = new_w;
+            win.h = new_h;
+        }
+
         void focus_top_visible()
         {
             clear_focus();
@@ -124,12 +274,14 @@ namespace WindowManager
             windows[n - 1].focused = true;
         }
 
-        void stop_all_drags()
+        void stop_all_interactions()
         {
             size_t n = (count < MAX_WINDOWS) ? count : MAX_WINDOWS;
             for (size_t i = 0; i < n; ++i)
             {
                 windows[i].dragging = false;
+                windows[i].resizing = false;
+                windows[i].resize_edge = RESIZE_NONE;
             }
         }
 
@@ -170,6 +322,8 @@ namespace WindowManager
                 win.maximized = false;
             }
             win.dragging = false;
+            win.resizing = false;
+            win.resize_edge = RESIZE_NONE;
         }
 
         void files_bar_rects(const Window &win, int32_t cx, int32_t cy, int32_t cw, int32_t ch,
@@ -213,12 +367,13 @@ namespace WindowManager
                 size_t total = Shell::history_count();
                 size_t max_h = static_cast<size_t>(max_hist_lines);
                 size_t start_idx = (total > max_h) ? (total - max_h) : 0;
+                int32_t inner_w = cw - 16;
 
                 int32_t y = top_y;
                 for (size_t i = start_idx; i < total; ++i)
                 {
                     uint32_t col = (Shell::history_kind_at(i) == ShellLineKind::Command) ? cmd_col : rsp_col;
-                    Font8x16::draw_text(cx + 8, y, Shell::history_at(i), col);
+                    draw_text_clipped(cx + 8, y, Shell::history_at(i), inner_w, col);
                     y += 16;
                 }
 
@@ -232,16 +387,21 @@ namespace WindowManager
                     }
 
                     int32_t prompt_x = cx + 8;
-                    int32_t input_x = prompt_x + 13 * 8;
-                    int32_t cursor_x = input_x + static_cast<int32_t>(cur_len) * 8;
+                    int32_t prompt_px = 13 * 8;
+                    draw_text_clipped(prompt_x, prompt_y, "singularity> ", inner_w, acc_col);
 
-                    Font8x16::draw_text(prompt_x, prompt_y, "singularity> ", acc_col);
-                    Font8x16::draw_text(input_x, prompt_y, cur, text_col);
-
-                    bool blink_on = ((Timer::ticks() / 50u) % 2u) == 0u;
-                    if (win.focused && blink_on && cursor_x + 8 <= cx + cw - 4)
+                    int32_t avail_input_px = inner_w - prompt_px;
+                    if (avail_input_px >= 8)
                     {
-                        Framebuffer::fill_rect(cursor_x, prompt_y + 2, 8, 12, acc_col);
+                        int32_t input_x = prompt_x + prompt_px;
+                        draw_text_clipped(input_x, prompt_y, cur, avail_input_px, text_col);
+
+                        int32_t cursor_x = input_x + static_cast<int32_t>(cur_len) * 8;
+                        bool blink_on = ((Timer::ticks() / 50u) % 2u) == 0u;
+                        if (win.focused && blink_on && cursor_x + 8 <= cx + cw - 8)
+                        {
+                            Framebuffer::fill_rect(cursor_x, prompt_y + 2, 8, 12, acc_col);
+                        }
                     }
                 }
             }
@@ -252,11 +412,11 @@ namespace WindowManager
                 const uint32_t btn_txt_bg = Framebuffer::rgb(42, 58, 74);
                 const uint32_t btn_img_bg = Framebuffer::rgb(58, 46, 74);
 
-                Font8x16::draw_text(cx + 8, cy + 6, "initrd:/", acc_col);
+                draw_text_clipped(cx + 8, cy + 6, "initrd:/", cw - 16, acc_col);
 
                 if (!InitRd::is_ready())
                 {
-                    Font8x16::draw_text(cx + 8, cy + 28, "initrd not ready", dim_col);
+                    draw_text_clipped(cx + 8, cy + 28, "initrd not ready", cw - 16, dim_col);
                     return;
                 }
 
@@ -278,15 +438,19 @@ namespace WindowManager
                     {
                         break;
                     }
-                    if (static_cast<int32_t>(i) == win.selected_file)
+                    if (ry + row_h > cy + ch - 4)
+                    {
+                        break;
+                    }
+                    if (static_cast<int32_t>(i) == win.selected_file && cw > 12)
                     {
                         Framebuffer::fill_rect(cx + 6, ry - 1, cw - 12, row_h, sel_bg);
                     }
                     uint32_t col = e->is_dir ? dir_col : text_col;
-                    Font8x16::draw_text(cx + 12, ry, e->name, col);
+                    draw_text_clipped(cx + 12, ry, e->name, cw - 20, col);
                 }
 
-                if (bar_y > list_y + 16)
+                if (bar_y > list_y + 16 && cw > 12)
                 {
                     Framebuffer::fill_rect(cx + 6, bar_y - 6, cw - 12, 1, border_col);
 
@@ -310,22 +474,9 @@ namespace WindowManager
                     }
 
                     int32_t max_file_px = ((lbl_x >= cx + 8) ? lbl_x : txt_bx) - 8 - (cx + 10);
-                    if (max_file_px > 0)
+                    if (max_file_px >= 8)
                     {
-                        char short_name[32];
-                        size_t max_chars = static_cast<size_t>(max_file_px / 8);
-                        if (max_chars >= sizeof(short_name))
-                        {
-                            max_chars = sizeof(short_name) - 1;
-                        }
-                        size_t k = 0;
-                        while (k < max_chars && file_lbl[k] != '\0')
-                        {
-                            short_name[k] = file_lbl[k];
-                            ++k;
-                        }
-                        short_name[k] = '\0';
-                        Font8x16::draw_text(cx + 10, bar_y + 2, short_name, text_col);
+                        draw_text_clipped(cx + 10, bar_y + 2, file_lbl, max_file_px, text_col);
                     }
 
                     if (txt_bx > cx + 10)
@@ -346,8 +497,14 @@ namespace WindowManager
             }
             else if (win.kind == WindowKind::About)
             {
-                Font8x16::draw_text(cx + 10, cy + 12, "Singularity OS", acc_col);
-                Font8x16::draw_text(cx + 10, cy + 32, "Freestanding x86 GUI", dim_col);
+                if (ch >= 28)
+                {
+                    draw_text_clipped(cx + 10, cy + 12, "Singularity OS", cw - 20, acc_col);
+                }
+                if (ch >= 48)
+                {
+                    draw_text_clipped(cx + 10, cy + 32, "Freestanding x86 GUI", cw - 20, dim_col);
+                }
             }
         }
 
@@ -371,6 +528,14 @@ namespace WindowManager
             windows[i].dragging = false;
             windows[i].drag_offset_x = 0;
             windows[i].drag_offset_y = 0;
+            windows[i].resizing = false;
+            windows[i].resize_edge = RESIZE_NONE;
+            windows[i].resize_start_x = 0;
+            windows[i].resize_start_y = 0;
+            windows[i].resize_start_w = 0;
+            windows[i].resize_start_h = 0;
+            windows[i].resize_mouse_x = 0;
+            windows[i].resize_mouse_y = 0;
             windows[i].selected_file = -1;
             windows[i].maximized = false;
             windows[i].restore_x = 0;
@@ -402,14 +567,22 @@ namespace WindowManager
         win.kind = kind;
         win.x = x;
         win.y = y;
-        win.w = w;
-        win.h = h;
+        win.w = (w < MIN_WIN_W) ? MIN_WIN_W : w;
+        win.h = (h < MIN_WIN_H) ? MIN_WIN_H : h;
         copy_title(win.title, title);
         win.visible = true;
         win.focused = true;
         win.dragging = false;
         win.drag_offset_x = 0;
         win.drag_offset_y = 0;
+        win.resizing = false;
+        win.resize_edge = RESIZE_NONE;
+        win.resize_start_x = 0;
+        win.resize_start_y = 0;
+        win.resize_start_w = 0;
+        win.resize_start_h = 0;
+        win.resize_mouse_x = 0;
+        win.resize_mouse_y = 0;
         win.selected_file = -1;
         win.maximized = false;
         win.restore_x = 0;
@@ -434,9 +607,11 @@ namespace WindowManager
         {
             for (size_t i = 0; i < n; ++i)
             {
-                if (windows[i].dragging)
+                if (windows[i].dragging || windows[i].resizing)
                 {
                     windows[i].dragging = false;
+                    windows[i].resizing = false;
+                    windows[i].resize_edge = RESIZE_NONE;
                     changed = true;
                 }
             }
@@ -448,6 +623,19 @@ namespace WindowManager
             for (size_t i = 0; i < n; ++i)
             {
                 Window &w = windows[i];
+                if (w.visible && w.resizing && !w.maximized)
+                {
+                    int32_t old_x = w.x;
+                    int32_t old_y = w.y;
+                    int32_t old_w = w.w;
+                    int32_t old_h = w.h;
+                    apply_resize(w, mx, my);
+                    if (w.x != old_x || w.y != old_y || w.w != old_w || w.h != old_h)
+                    {
+                        changed = true;
+                    }
+                    return changed;
+                }
                 if (w.visible && w.dragging && !w.maximized)
                 {
                     int32_t new_x = mx - w.drag_offset_x;
@@ -473,7 +661,7 @@ namespace WindowManager
             return false;
         }
 
-        stop_all_drags();
+        stop_all_interactions();
 
         for (size_t i = n; i > 0; --i)
         {
@@ -497,6 +685,8 @@ namespace WindowManager
                     w.visible = false;
                     w.focused = false;
                     w.dragging = false;
+                    w.resizing = false;
+                    w.resize_edge = RESIZE_NONE;
                     w.maximized = false;
                     focus_top_visible();
                     return true;
@@ -520,6 +710,8 @@ namespace WindowManager
                     w.visible = false;
                     w.focused = false;
                     w.dragging = false;
+                    w.resizing = false;
+                    w.resize_edge = RESIZE_NONE;
                     w.maximized = false;
                     focus_top_visible();
                     return true;
@@ -528,6 +720,21 @@ namespace WindowManager
 
             bring_to_front(idx);
             Window &top = windows[n - 1];
+
+            uint8_t edge = hit_test_resize_edge(top, mx, my);
+            if (edge != RESIZE_NONE)
+            {
+                top.resizing = true;
+                top.resize_edge = edge;
+                top.resize_start_x = top.x;
+                top.resize_start_y = top.y;
+                top.resize_start_w = top.w;
+                top.resize_start_h = top.h;
+                top.resize_mouse_x = mx;
+                top.resize_mouse_y = my;
+                return true;
+            }
+
             int32_t th = titlebar_height(top);
             if (point_in_rect(mx, my, top.x, top.y, top.w, th))
             {
@@ -601,7 +808,9 @@ namespace WindowManager
 
         const uint32_t bg_col = Framebuffer::rgb(20, 22, 27);
         const uint32_t title_bg = win.focused ? Framebuffer::rgb(36, 40, 48) : Framebuffer::rgb(26, 28, 34);
-        const uint32_t border_col = win.focused ? Framebuffer::rgb(138, 237, 128) : Framebuffer::rgb(52, 56, 68);
+        const uint32_t border_col = win.resizing
+                                        ? Framebuffer::rgb(255, 196, 86)
+                                        : (win.focused ? Framebuffer::rgb(138, 237, 128) : Framebuffer::rgb(52, 56, 68));
         const uint32_t text_col = Framebuffer::rgb(245, 247, 250);
         const uint32_t close_bg = Framebuffer::rgb(165, 48, 48);
 
@@ -642,7 +851,16 @@ namespace WindowManager
 
         if (th >= 16)
         {
-            Font8x16::draw_text(win.x + 8, win.y + (th - 16) / 2, win.title, text_col);
+            int32_t title_max_px = win.w - 16;
+            if (has_title_buttons(win))
+            {
+                title_max_px = win.w - (BTN_SIZE * 2 + BTN_GAP + BTN_MARGIN * 2 + 12);
+            }
+            else if (has_close_button(win))
+            {
+                title_max_px = win.w - (BTN_SIZE + BTN_MARGIN * 2 + 12);
+            }
+            draw_text_clipped(win.x + 8, win.y + (th - 16) / 2, win.title, title_max_px, text_col);
         }
 
         if (win.h > th)
@@ -662,6 +880,15 @@ namespace WindowManager
         if (cw > 0 && ch > 0)
         {
             draw_client_content(win, cx, cy, cw, ch);
+        }
+
+        if (!win.maximized && win.w >= 24 && win.h >= th + 16)
+        {
+            int32_t gx = win.x + win.w - 8;
+            int32_t gy = win.y + win.h - 8;
+            Framebuffer::fill_rect(gx + 3, gy + 3, 3, 3, border_col);
+            Framebuffer::fill_rect(gx, gy + 5, 2, 1, border_col);
+            Framebuffer::fill_rect(gx + 5, gy, 1, 2, border_col);
         }
     }
 
